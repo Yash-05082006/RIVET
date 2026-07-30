@@ -102,27 +102,39 @@ function Nav() {
   );
 }
 
+function GoogleIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59A14.5 14.5 0 0 1 9.77 24c0-1.6.28-3.14.76-4.59l-7.98-6.19A23.94 23.94 0 0 0 0 24c0 3.88.93 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.9-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.17 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
+  );
+}
+
 function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.35]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, #E5E5E5 1px, transparent 1px), linear-gradient(to bottom, #E5E5E5 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-          maskImage:
-            "radial-gradient(ellipse at 20% 0%, black 40%, transparent 70%)",
-        }}
-      />
-      <div className="container-page relative grid gap-14 py-20 md:py-28 lg:grid-cols-12 lg:gap-10">
+    <section className="relative border-b border-border bg-background">
+      <div className="container-page relative grid items-center gap-16 py-24 md:py-32 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-7">
           <p className="eyebrow">Internal Work Management</p>
-          <h1 className="display-heading mt-5 text-[44px] text-foreground sm:text-6xl lg:text-[76px]">
+          <h1 className="display-heading mt-5 text-[44px] text-foreground sm:text-6xl lg:text-[72px]">
             Retire the spreadsheets. Run the work.
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
             KAIRO gives every department a single, structured place to log
             daily activity, route work through approvals, and report on it
             without stitching files together at the end of the month.
@@ -130,27 +142,49 @@ function Hero() {
 
           <form
             id="get-started"
-            className="mt-8 flex max-w-lg flex-col gap-3 sm:flex-row"
+            className="mt-10 max-w-md"
             onSubmit={(e) => e.preventDefault()}
           >
+            <label
+              htmlFor="hero-email"
+              className="block text-sm font-semibold text-foreground"
+            >
+              Work email
+            </label>
             <input
+              id="hero-email"
               type="email"
-              required
               placeholder="you@company.com"
-              className="h-12 flex-1 rounded-full border border-border bg-background px-5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
-              aria-label="Work email"
+              className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary-light"
             />
             <button
               type="submit"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+              className="mt-3 inline-flex h-12 w-full items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
             >
-              Request access
+              Sign up
               <ArrowRight className="ml-2 h-4 w-4" />
             </button>
+
+            <div className="my-5 flex items-center gap-4">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs font-medium text-muted-foreground">
+                Or continue with
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <button
+              type="button"
+              className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background px-6 text-sm font-semibold text-foreground transition-all hover:border-foreground/25 hover:bg-surface hover:shadow-[0_2px_10px_-4px_rgba(17,17,17,0.25)]"
+            >
+              <GoogleIcon className="h-5 w-5" />
+              Continue with Google
+            </button>
+
+            <p className="mt-4 text-xs text-muted-foreground">
+              Use a work email so we can match you to your organization.
+            </p>
           </form>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Use a work email so we can match you to your organization.
-          </p>
         </div>
 
         <div className="lg:col-span-5">
@@ -171,50 +205,60 @@ function HeroPreview() {
   ] as const;
   const badge = (s: string) =>
     s === "Approved"
-      ? "bg-[#EEF7EF] text-[#1F6B3A] border-[#D6ECDA]"
+      ? "bg-[#ECF7F0] text-[#1F6B3A] border-[#D6ECDA]"
       : s === "Pending"
         ? "bg-[#FFF7E8] text-[#8A5A00] border-[#F1E1B8]"
-        : "bg-[#FBECEA] text-[#8A2A22] border-[#EFD1CD]";
+        : "bg-primary-light text-primary border-[#F3D3CF]";
   return (
-    <div className="relative rounded-2xl border border-border bg-background p-3 shadow-[0_20px_60px_-30px_rgba(11,11,11,0.25)]">
-      <div className="flex items-center gap-2 border-b border-border px-2 pb-3">
-        <div className="flex gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#E5E5E5]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#E5E5E5]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#E5E5E5]" />
-        </div>
-        <div className="mx-auto flex h-7 items-center gap-2 rounded-full bg-surface px-3 text-xs text-muted-foreground">
-          <Search className="h-3.5 w-3.5" />
-          kairo.app / approvals
-        </div>
-      </div>
-      <div className="p-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[13px] font-semibold text-foreground">Pending approvals</p>
-            <p className="text-xs text-muted-foreground">Research department • Today</p>
+    <div className="relative">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -inset-6 -z-10 rounded-[32px]"
+        style={{
+          background:
+            "radial-gradient(60% 60% at 70% 20%, #FBEAE8 0%, transparent 70%)",
+        }}
+      />
+      <div className="relative rounded-2xl border border-border bg-background p-3 shadow-[0_30px_70px_-40px_rgba(17,17,17,0.35)]">
+        <div className="flex items-center gap-2 border-b border-border px-2 pb-3">
+          <div className="flex gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-primary-accent/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#E8E8E8]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#E8E8E8]" />
           </div>
-          <span className="inline-flex h-6 items-center rounded-full bg-primary/10 px-2 text-[11px] font-semibold text-primary">
-            12 items
-          </span>
+          <div className="mx-auto flex h-7 items-center gap-2 rounded-full bg-surface px-3 text-xs text-muted-foreground">
+            <Search className="h-3.5 w-3.5" />
+            kairo.app / approvals
+          </div>
         </div>
-        <ul className="mt-4 divide-y divide-border overflow-hidden rounded-lg border border-border">
-          {rows.map((r) => (
-            <li key={r.name} className="flex items-center justify-between gap-3 bg-background px-3 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
-                <p className="text-xs text-muted-foreground">{r.who}</p>
-              </div>
-              <span
-                className={`inline-flex h-6 shrink-0 items-center rounded-full border px-2 text-[11px] font-medium ${badge(
-                  r.status,
-                )}`}
-              >
-                {r.status}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[13px] font-semibold text-foreground">Pending approvals</p>
+              <p className="text-xs text-muted-foreground">Research department • Today</p>
+            </div>
+            <span className="inline-flex h-6 items-center rounded-full bg-primary-light px-2 text-[11px] font-semibold text-primary">
+              12 items
+            </span>
+          </div>
+          <ul className="mt-4 divide-y divide-border overflow-hidden rounded-lg border border-border">
+            {rows.map((r) => (
+              <li key={r.name} className="flex items-center justify-between gap-3 bg-background px-3 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
+                  <p className="text-xs text-muted-foreground">{r.who}</p>
+                </div>
+                <span
+                  className={`inline-flex h-6 shrink-0 items-center rounded-full border px-2 text-[11px] font-medium ${badge(
+                    r.status,
+                  )}`}
+                >
+                  {r.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

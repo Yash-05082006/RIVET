@@ -24,6 +24,8 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-primary-accent: var(--primary-accent);
   --color-ink: var(--ink);
   --color-input: var(--border);
   --color-ring: var(--primary);
@@ -42,14 +44,16 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #0B0B0B;
-  --ink: #0B0B0B;
+  --foreground: #111111;
+  --ink: #111111;
   --surface: #F9F9F9;
   --border: #E5E5E5;
   --muted: #F9F9F9;
-  --muted-foreground: #666666;
+  --muted-foreground: #5F6368;
   --primary: #B34138;
-  --primary-hover: #942F27;
+  --primary-hover: #9F352E;
+  --primary-light: #FBEAE8;
+  --primary-accent: #D95A4C;
   --primary-foreground: #FFFFFF;
   --radius: 12px;
 }
