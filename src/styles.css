@@ -24,6 +24,8 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-primary-accent: var(--primary-accent);
   --color-ink: var(--ink);
   --color-input: var(--border);
   --color-ring: var(--primary);
