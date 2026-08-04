@@ -1,8 +1,8 @@
-# Kairo: Enterprise Clarity
+# Rivet: Enterprise Clarity
 
 You are an expert Product Designer, UX Designer, UI Designer, and Frontend Engineer.
 
-We are building a real B2B SaaS product called **KAIRO**.
+We are building a real B2B SaaS product called **RIVET**.
 
 This is NOT a demo project, template, or college project.
 
@@ -10,7 +10,7 @@ The goal is to create a production-quality marketing website that looks like it 
 
 I am providing two references:
 
-1. KAIRO Product Requirements Document (PRD)
+1. RIVET Product Requirements Document (PRD)
 
 2. Screenshots of the Jira website
 
@@ -72,7 +72,7 @@ DO NOT copy:
 
 - Jira graphics
 
-Create a unique identity for KAIRO.
+Create a unique identity for RIVET.
 
 =========================================
 
@@ -86,7 +86,7 @@ However, DO NOT use the entire PRD while designing the marketing website.
 
 Use the PRD ONLY to understand:
 
-• What KAIRO is
+• What RIVET is
 
 • Who the product is built for
 
@@ -128,7 +128,7 @@ Those parts will be implemented later when we build the actual platform.
 
 At this stage, focus ONLY on building the public-facing marketing website.
 
-The website should educate visitors about KAIRO, build trust, explain its value, and encourage them to sign up.
+The website should educate visitors about RIVET, build trust, explain its value, and encourage them to sign up.
 
 The website should NOT attempt to recreate the dashboard or internal application.
 
@@ -140,7 +140,7 @@ BRAND GUIDELINES
 
 Product Name:
 
-KAIRO
+RIVET
 
 Theme:
 
@@ -226,7 +226,7 @@ WEBSITE OBJECTIVE
 
 The website should clearly answer:
 
-What is KAIRO?
+What is RIVET?
 
 Who is it for?
 
@@ -236,7 +236,7 @@ How does it solve their problems?
 
 What are its key features?
 
-Why should they trust KAIRO?
+Why should they trust RIVET?
 
 What should they do next?
 
@@ -266,7 +266,7 @@ Avoid phrases such as:
 
 Instead,
 
-write authentic product-focused copy based on what KAIRO actually offers.
+write authentic product-focused copy based on what RIVET actually offers.
 
 The language should feel like it was written by a real product company.
 
@@ -428,7 +428,7 @@ DELIVERABLE
 
 =========================================
 
-Build a complete production-quality KAIRO marketing website using the PRD as the product reference and the Jira screenshots as UI/UX inspiration.
+Build a complete production-quality RIVET marketing website using the PRD as the product reference and the Jira screenshots as UI/UX inspiration.
 
 The final website should feel like an original enterprise SaaS product with its own visual identity while maintaining the same level of professionalism, cleanliness, and usability as Jira.
 

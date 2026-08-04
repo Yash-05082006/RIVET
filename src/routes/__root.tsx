@@ -74,15 +74,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "KAIRO | Internal Work Management Platform" },
+      { title: "RIVET | Internal Work Management Platform" },
       {
         name: "description",
         content:
-          "KAIRO replaces spreadsheets with a structured, role-governed platform for daily logs, approvals, dashboards, and reporting across every department.",
+          "RIVET replaces spreadsheets with a structured, role-governed platform for daily logs, approvals, dashboards, and reporting across every department.",
       },
       {
         property: "og:title",
-        content: "KAIRO | Internal Work Management for Modern Teams",
+        content: "RIVET | Internal Work Management for Modern Teams",
       },
       {
         property: "og:description",
