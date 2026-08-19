@@ -105,18 +105,18 @@ function Nav() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <a
-            href="#signin"
+          <Link
+            to="/sign-in"
             className="hidden text-sm font-medium text-foreground/80 hover:text-foreground sm:inline"
           >
             Sign in
-          </a>
-          <a
-            href="#get-started"
+          </Link>
+          <Link
+            to="/sign-in"
             className="inline-flex h-9 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             Get started
-          </a>
+          </Link>
         </div>
       </div>
     </header>
@@ -162,7 +162,7 @@ function Hero() {
         </div>
 
         <div className="lg:col-span-5 lg:flex lg:justify-end">
-          <form id="get-started" className="w-full max-w-md" onSubmit={(e) => e.preventDefault()}>
+          <div id="get-started" className="w-full max-w-md">
             <label htmlFor="hero-email" className="block text-sm font-semibold text-foreground">
               Work email
             </label>
@@ -172,13 +172,13 @@ function Hero() {
               placeholder="you@company.com"
               className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary-light"
             />
-            <button
-              type="submit"
+            <Link
+              to="/sign-in"
               className="mt-3 inline-flex h-12 w-full items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               Sign up
               <ArrowRight className="ml-2 h-4 w-4" />
-            </button>
+            </Link>
 
             <div className="my-5 flex items-center gap-4">
               <span className="h-px flex-1 bg-border" />
@@ -186,18 +186,18 @@ function Hero() {
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            <button
-              type="button"
+            <Link
+              to="/sign-in"
               className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background px-6 text-sm font-semibold text-foreground transition-all hover:border-foreground/25 hover:bg-surface hover:shadow-[0_2px_10px_-4px_rgba(17,17,17,0.25)]"
             >
               <GoogleIcon className="h-5 w-5" />
               Continue with Google
-            </button>
+            </Link>
 
             <p className="mt-4 text-xs text-muted-foreground">
               Use a work email so we can match you to your organization.
             </p>
-          </form>
+          </div>
         </div>
       </div>
     </section>

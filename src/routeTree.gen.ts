@@ -10,33 +10,242 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppApprovalsRouteImport } from './routes/app/approvals'
+import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
+import { Route as AppModulesRouteImport } from './routes/app/modules'
+import { Route as AppNotificationsRouteImport } from './routes/app/notifications'
+import { Route as AppReportsRouteImport } from './routes/app/reports'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
+import { Route as AppWorkRouteImport } from './routes/app/work'
+import { Route as AppAdminAuditRouteImport } from './routes/app/admin/audit'
+import { Route as AppAdminDepartmentsRouteImport } from './routes/app/admin/departments'
+import { Route as AppAdminModulesRouteImport } from './routes/app/admin/modules'
+import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
+import { Route as AppModulesModuleKeyRouteImport } from './routes/app/modules/$moduleKey'
+import { Route as AppModulesModuleKeyNewRouteImport } from './routes/app/modules/$moduleKey/new'
+import { Route as AppModulesModuleKeyEntryEntryIdRouteImport } from './routes/app/modules/$moduleKey/entry.$entryId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApprovalsRoute = AppApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppModulesRoute = AppModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWorkRoute = AppWorkRouteImport.update({
+  id: '/work',
+  path: '/work',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminAuditRoute = AppAdminAuditRouteImport.update({
+  id: '/admin/audit',
+  path: '/admin/audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminDepartmentsRoute = AppAdminDepartmentsRouteImport.update({
+  id: '/admin/departments',
+  path: '/admin/departments',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminModulesRoute = AppAdminModulesRouteImport.update({
+  id: '/admin/modules',
+  path: '/admin/modules',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppModulesModuleKeyRoute = AppModulesModuleKeyRouteImport.update({
+  id: '/$moduleKey',
+  path: '/$moduleKey',
+  getParentRoute: () => AppModulesRoute,
+} as any)
+const AppModulesModuleKeyNewRoute = AppModulesModuleKeyNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppModulesModuleKeyRoute,
+} as any)
+const AppModulesModuleKeyEntryEntryIdRoute =
+  AppModulesModuleKeyEntryEntryIdRouteImport.update({
+    id: '/entry/$entryId',
+    path: '/entry/$entryId',
+    getParentRoute: () => AppModulesModuleKeyRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/app/approvals': typeof AppApprovalsRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/app/modules': typeof AppModulesRouteWithChildren
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/reports': typeof AppReportsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/work': typeof AppWorkRoute
+  '/app/': typeof AppIndexRoute
+  '/app/admin/audit': typeof AppAdminAuditRoute
+  '/app/admin/departments': typeof AppAdminDepartmentsRoute
+  '/app/admin/modules': typeof AppAdminModulesRoute
+  '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
+  '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
+  '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
+  '/app/approvals': typeof AppApprovalsRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/app/modules': typeof AppModulesRouteWithChildren
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/reports': typeof AppReportsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/work': typeof AppWorkRoute
+  '/app': typeof AppIndexRoute
+  '/app/admin/audit': typeof AppAdminAuditRoute
+  '/app/admin/departments': typeof AppAdminDepartmentsRoute
+  '/app/admin/modules': typeof AppAdminModulesRoute
+  '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
+  '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
+  '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/app/approvals': typeof AppApprovalsRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/app/modules': typeof AppModulesRouteWithChildren
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/reports': typeof AppReportsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/work': typeof AppWorkRoute
+  '/app/': typeof AppIndexRoute
+  '/app/admin/audit': typeof AppAdminAuditRoute
+  '/app/admin/departments': typeof AppAdminDepartmentsRoute
+  '/app/admin/modules': typeof AppAdminModulesRoute
+  '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
+  '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
+  '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/sign-in'
+    | '/app/approvals'
+    | '/app/dashboard'
+    | '/app/modules'
+    | '/app/notifications'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/work'
+    | '/app/'
+    | '/app/admin/audit'
+    | '/app/admin/departments'
+    | '/app/admin/modules'
+    | '/app/admin/users'
+    | '/app/modules/$moduleKey'
+    | '/app/modules/$moduleKey/new'
+    | '/app/modules/$moduleKey/entry/$entryId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/sign-in'
+    | '/app/approvals'
+    | '/app/dashboard'
+    | '/app/modules'
+    | '/app/notifications'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/work'
+    | '/app'
+    | '/app/admin/audit'
+    | '/app/admin/departments'
+    | '/app/admin/modules'
+    | '/app/admin/users'
+    | '/app/modules/$moduleKey'
+    | '/app/modules/$moduleKey/new'
+    | '/app/modules/$moduleKey/entry/$entryId'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/sign-in'
+    | '/app/approvals'
+    | '/app/dashboard'
+    | '/app/modules'
+    | '/app/notifications'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/work'
+    | '/app/'
+    | '/app/admin/audit'
+    | '/app/admin/departments'
+    | '/app/admin/modules'
+    | '/app/admin/users'
+    | '/app/modules/$moduleKey'
+    | '/app/modules/$moduleKey/new'
+    | '/app/modules/$moduleKey/entry/$entryId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  SignInRoute: typeof SignInRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +257,189 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/approvals': {
+      id: '/app/approvals'
+      path: '/approvals'
+      fullPath: '/app/approvals'
+      preLoaderRoute: typeof AppApprovalsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dashboard': {
+      id: '/app/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modules': {
+      id: '/app/modules'
+      path: '/modules'
+      fullPath: '/app/modules'
+      preLoaderRoute: typeof AppModulesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/reports': {
+      id: '/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/work': {
+      id: '/app/work'
+      path: '/work'
+      fullPath: '/app/work'
+      preLoaderRoute: typeof AppWorkRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/audit': {
+      id: '/app/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/app/admin/audit'
+      preLoaderRoute: typeof AppAdminAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/departments': {
+      id: '/app/admin/departments'
+      path: '/admin/departments'
+      fullPath: '/app/admin/departments'
+      preLoaderRoute: typeof AppAdminDepartmentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/modules': {
+      id: '/app/admin/modules'
+      path: '/admin/modules'
+      fullPath: '/app/admin/modules'
+      preLoaderRoute: typeof AppAdminModulesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin/users': {
+      id: '/app/admin/users'
+      path: '/admin/users'
+      fullPath: '/app/admin/users'
+      preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modules/$moduleKey': {
+      id: '/app/modules/$moduleKey'
+      path: '/$moduleKey'
+      fullPath: '/app/modules/$moduleKey'
+      preLoaderRoute: typeof AppModulesModuleKeyRouteImport
+      parentRoute: typeof AppModulesRoute
+    }
+    '/app/modules/$moduleKey/new': {
+      id: '/app/modules/$moduleKey/new'
+      path: '/new'
+      fullPath: '/app/modules/$moduleKey/new'
+      preLoaderRoute: typeof AppModulesModuleKeyNewRouteImport
+      parentRoute: typeof AppModulesModuleKeyRoute
+    }
+    '/app/modules/$moduleKey/entry/$entryId': {
+      id: '/app/modules/$moduleKey/entry/$entryId'
+      path: '/entry/$entryId'
+      fullPath: '/app/modules/$moduleKey/entry/$entryId'
+      preLoaderRoute: typeof AppModulesModuleKeyEntryEntryIdRouteImport
+      parentRoute: typeof AppModulesModuleKeyRoute
+    }
   }
 }
 
+interface AppModulesModuleKeyRouteChildren {
+  AppModulesModuleKeyNewRoute: typeof AppModulesModuleKeyNewRoute
+  AppModulesModuleKeyEntryEntryIdRoute: typeof AppModulesModuleKeyEntryEntryIdRoute
+}
+
+const AppModulesModuleKeyRouteChildren: AppModulesModuleKeyRouteChildren = {
+  AppModulesModuleKeyNewRoute: AppModulesModuleKeyNewRoute,
+  AppModulesModuleKeyEntryEntryIdRoute: AppModulesModuleKeyEntryEntryIdRoute,
+}
+
+const AppModulesModuleKeyRouteWithChildren =
+  AppModulesModuleKeyRoute._addFileChildren(AppModulesModuleKeyRouteChildren)
+
+interface AppModulesRouteChildren {
+  AppModulesModuleKeyRoute: typeof AppModulesModuleKeyRouteWithChildren
+}
+
+const AppModulesRouteChildren: AppModulesRouteChildren = {
+  AppModulesModuleKeyRoute: AppModulesModuleKeyRouteWithChildren,
+}
+
+const AppModulesRouteWithChildren = AppModulesRoute._addFileChildren(
+  AppModulesRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppApprovalsRoute: typeof AppApprovalsRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppModulesRoute: typeof AppModulesRouteWithChildren
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppReportsRoute: typeof AppReportsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppWorkRoute: typeof AppWorkRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppAdminAuditRoute: typeof AppAdminAuditRoute
+  AppAdminDepartmentsRoute: typeof AppAdminDepartmentsRoute
+  AppAdminModulesRoute: typeof AppAdminModulesRoute
+  AppAdminUsersRoute: typeof AppAdminUsersRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppApprovalsRoute: AppApprovalsRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppModulesRoute: AppModulesRouteWithChildren,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppReportsRoute: AppReportsRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppWorkRoute: AppWorkRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppAdminAuditRoute: AppAdminAuditRoute,
+  AppAdminDepartmentsRoute: AppAdminDepartmentsRoute,
+  AppAdminModulesRoute: AppAdminModulesRoute,
+  AppAdminUsersRoute: AppAdminUsersRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  SignInRoute: SignInRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
