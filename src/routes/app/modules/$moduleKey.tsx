@@ -65,7 +65,7 @@ function ModuleDetailPage() {
           to="/app/modules"
           className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-3"
         >
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> All Modules
+          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Modules
         </Link>
 
         <div className="flex items-start justify-between gap-4">

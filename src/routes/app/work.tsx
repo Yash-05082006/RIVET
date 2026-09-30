@@ -83,6 +83,7 @@ function WorkPage() {
                     <Link
                       to="/app/modules/$moduleKey/entry/$entryId"
                       params={{ moduleKey: entry.moduleKey, entryId: entry.id }}
+                      search={{ from: 'work' }}
                       className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-hover transition-colors"
                     >
                       {entry.status === "rejected" ? "Fix & Resubmit" : "Continue"}
@@ -128,6 +129,7 @@ function WorkPage() {
                       <Link
                         to="/app/modules/$moduleKey/entry/$entryId"
                         params={{ moduleKey: entry.moduleKey, entryId: entry.id }}
+                        search={{ from: 'work' }}
                         className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                       >
                         View

@@ -1,7 +1,7 @@
 import { Link, Outlet, createFileRoute, useNavigate, useLocation, redirect } from "@tanstack/react-router";
-import { Menu, Search, Bell, LogOut, Check } from "lucide-react";
+import { Menu, Bell, LogOut } from "lucide-react";
 import { useState } from "react";
-import { useRivet, DEMO_USER_BY_ROLE } from "../lib/rivet/store";
+import { useRivet } from "../lib/rivet/store";
 import { sectionsForRole, roleLabel } from "../lib/rivet/nav";
 
 export const Route = createFileRoute("/app")({
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { user, ready, signOut, unreadCount, signIn, reviewQueue } = useRivet();
+  const { user, ready, signOut, unreadCount, reviewQueue } = useRivet();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -33,7 +33,7 @@ function AppLayout() {
 
   const handleSignOut = () => {
     signOut();
-    navigate({ to: "/" });
+    navigate({ to: "/sign-in" });
   };
 
   return (
@@ -107,26 +107,6 @@ function AppLayout() {
           </nav>
 
           <div className="border-t p-4">
-            {/* DEV ONLY ROLE SWITCHER */}
-            <div className="mb-4 rounded-md border border-dashed border-primary/50 bg-primary-light p-2">
-              <div className="mb-1 text-[10px] font-bold tracking-wider text-primary flex items-center justify-between">
-                <span>DEV ROLE SWITCHER</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                {(["employee", "manager", "admin"] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => signIn(DEMO_USER_BY_ROLE[r])}
-                    className={`flex items-center justify-between rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-                      user.role === r ? "bg-primary text-primary-foreground" : "hover:bg-white/50 text-primary"
-                    }`}
-                  >
-                    {roleLabel[r]}
-                    {user.role === r && <Check className="h-3 w-3" />}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="flex items-center justify-between group">
               <div className="flex items-center gap-2 overflow-hidden">
@@ -149,21 +129,15 @@ function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-14 items-center justify-between border-b bg-background px-4 lg:px-8">
           <div className="flex items-center gap-4 flex-1">
-            <div className="hidden max-w-md flex-1 items-center gap-2 rounded-md border bg-surface px-3 py-1.5 text-sm text-muted-foreground md:flex">
-              <Search className="h-4 w-4" />
-              <span className="flex-1">Search anything...</span>
-              <kbd className="hidden rounded border bg-background px-1.5 font-mono text-[10px] font-medium sm:inline-block">
-                Ctrl+K
-              </kbd>
-            </div>
+            {/* Search removed as per PRD */}
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-muted-foreground hover:text-foreground">
+            <Link to="/app/notifications" className="relative p-2 text-muted-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-primary"></span>
               )}
-            </button>
+            </Link>
           </div>
         </header>
 

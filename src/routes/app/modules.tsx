@@ -3,6 +3,7 @@ import { useCurrentUser } from "../../lib/rivet/store";
 import { modules, departmentName } from "../../lib/rivet/demo-data";
 import { ArrowRight, CircleDot } from "lucide-react";
 import { useMemo } from "react";
+import { canCreateIn } from "../../lib/rivet/nav";
 
 export const Route = createFileRoute("/app/modules")({
   component: ModulesPage,
@@ -39,7 +40,7 @@ function ModulesPage() {
           <tbody className="divide-y divide-border">
             {accessibleModules.length > 0 ? (
               accessibleModules.map((module) => {
-                const canCreate = module.createRoles.includes(user.role);
+                const canCreate = canCreateIn(user, module.key);
                 return (
                   <tr key={module.key} className="hover:bg-surface/50 transition-colors">
                     <td className="px-5 py-4 align-top">

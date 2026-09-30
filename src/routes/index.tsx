@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { useRivet, DEMO_USER_BY_ROLE } from "../lib/rivet/store";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
 import structuredDailyLogsImg from "../../assets/Structured_Daily_Logs.png";
 import approvalWorkflowsImg from "../../assets/Approval_Workflows.png";
@@ -40,6 +42,7 @@ import {
   Zap,
   Code2,
   RefreshCw,
+  EyeOff,
   CheckSquare,
 } from "lucide-react";
 import icon1 from "../Icon_Images/1'.png";
@@ -88,7 +91,7 @@ function Logo({ className = "" }: { className?: string }) {
 function Nav() {
   const items = ["Product", "Solutions", "Modules", "Customers", "Pricing"];
   return (
-    <header className="sticky top-0 z-40 border-b border-border/50 bg-background/70 backdrop-blur-lg">
+    <header data-workspace="verified" className="sticky top-0 z-40 border-b border-border/50 bg-background/70 backdrop-blur-lg">
       <div className="container-page flex h-16 items-center justify-between gap-6">
         <Link to="/" className="shrink-0">
           <Logo />
@@ -106,13 +109,7 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <Link
-            to="/sign-in"
-            className="hidden text-sm font-medium text-foreground/80 hover:text-foreground sm:inline"
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/sign-in"
+            to="/sign-up"
             className="inline-flex h-9 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             Get started
@@ -147,7 +144,61 @@ function GoogleIcon({ className = "" }: { className?: string }) {
 }
 
 function Hero() {
-  return (
+  const { signIn } = useRivet();
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const navigate = useNavigate();
+
+  function validateFields(): boolean {
+    let valid = true;
+    if (!email.trim()) {
+      setEmailError("Please enter your work email.");
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError("Please enter a valid email address.");
+      valid = false;
+    } else {
+      setEmailError("");
+    }
+    if (!password) {
+      setPasswordError("Please enter your password.");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+    return valid;
+  }
+
+  function handleSignIn() {
+    setAuthError("");
+    if (!validateFields()) return;
+    setIsAuthenticating(true);
+    // Small simulated delay to reflect async auth
+    setTimeout(() => {
+      const e = email.toLowerCase().trim();
+      const p = password;
+      if (e === "employee@rivet.com" && p === "employee@123") {
+        signIn(DEMO_USER_BY_ROLE["employee"]);
+        navigate({ to: "/app/dashboard" });
+      } else if (e === "manager@rivet.com" && p === "manager@123") {
+        signIn(DEMO_USER_BY_ROLE["manager"]);
+        navigate({ to: "/app/dashboard" });
+      } else if (e === "admin@rivet.com" && p === "admin@123") {
+        signIn(DEMO_USER_BY_ROLE["admin"]);
+        navigate({ to: "/app/dashboard" });
+      } else {
+        setAuthError("Incorrect email or password.");
+        setIsAuthenticating(false);
+      }
+    }, 500);
+  }
+
+    return (
     <section className="relative border-b border-border bg-background py-16 md:py-20 lg:py-28">
       <div className="container-page relative grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-7">
@@ -169,33 +220,77 @@ function Hero() {
             <input
               id="hero-email"
               type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError("");
+                if (authError) setAuthError("");
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSignIn(); }}
               placeholder="you@company.com"
-              className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary-light"
+              className={`mt-2 h-12 w-full rounded-lg border bg-background px-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-4 focus:ring-primary-light ${emailError ? "border-red-400 focus:border-red-500" : "border-border focus:border-primary"}`}
+              aria-describedby={emailError ? "hero-email-error" : undefined}
             />
-            <Link
-              to="/sign-in"
-              className="mt-3 inline-flex h-12 w-full items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
-            >
-              Sign up
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            {emailError && (
+              <p id="hero-email-error" className="mt-1.5 text-xs text-red-600">{emailError}</p>
+            )}
 
-            <div className="my-5 flex items-center gap-4">
-              <span className="h-px flex-1 bg-border" />
-              <span className="text-xs font-medium text-muted-foreground">Or continue with</span>
-              <span className="h-px flex-1 bg-border" />
+            <div className="mt-4">
+              <label htmlFor="hero-password" className="block text-sm font-semibold text-foreground">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="hero-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError("");
+                    if (authError) setAuthError("");
+                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSignIn(); }}
+                  className={`mt-2 h-12 w-full rounded-lg border bg-background px-4 pr-10 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-4 focus:ring-primary-light ${passwordError ? "border-red-400 focus:border-red-500" : "border-border focus:border-primary"}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[1.1rem] text-muted-foreground hover:text-foreground focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {passwordError && (
+                <p className="mt-1.5 text-xs text-red-600">{passwordError}</p>
+              )}
             </div>
 
-            <Link
-              to="/sign-in"
-              className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-background px-6 text-sm font-semibold text-foreground transition-all hover:border-foreground/25 hover:bg-surface hover:shadow-[0_2px_10px_-4px_rgba(17,17,17,0.25)]"
-            >
-              <GoogleIcon className="h-5 w-5" />
-              Continue with Google
-            </Link>
+            {authError && (
+              <p className="mt-3 text-xs text-red-600">{authError}</p>
+            )}
 
-            <p className="mt-4 text-xs text-muted-foreground">
-              Use a work email so we can match you to your organization.
+            <button
+              type="button"
+              onClick={handleSignIn}
+              disabled={isAuthenticating}
+              className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isAuthenticating ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  Signing in...
+                </span>
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </button>
+
+            <p className="mt-4 text-xs text-muted-foreground text-center">
+              New user? <Link to="/sign-up" className="text-primary hover:underline font-medium">Create an account</Link>
             </p>
           </div>
         </div>
@@ -203,6 +298,7 @@ function Hero() {
     </section>
   );
 }
+
 
 function ProblemSection() {
   const cards = [

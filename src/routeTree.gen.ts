@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppApprovalsRouteImport } from './routes/app/approvals'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
@@ -24,6 +25,7 @@ import { Route as AppAdminAuditRouteImport } from './routes/app/admin/audit'
 import { Route as AppAdminDepartmentsRouteImport } from './routes/app/admin/departments'
 import { Route as AppAdminModulesRouteImport } from './routes/app/admin/modules'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
+import { Route as AppApprovalsEntryIdRouteImport } from './routes/app/approvals/$entryId'
 import { Route as AppModulesModuleKeyRouteImport } from './routes/app/modules/$moduleKey'
 import { Route as AppModulesModuleKeyNewRouteImport } from './routes/app/modules/$moduleKey/new'
 import { Route as AppModulesModuleKeyEntryEntryIdRouteImport } from './routes/app/modules/$moduleKey/entry.$entryId'
@@ -41,6 +43,11 @@ const AppRoute = AppRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -103,6 +110,11 @@ const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AppRoute,
 } as any)
+const AppApprovalsEntryIdRoute = AppApprovalsEntryIdRouteImport.update({
+  id: '/$entryId',
+  path: '/$entryId',
+  getParentRoute: () => AppApprovalsRoute,
+} as any)
 const AppModulesModuleKeyRoute = AppModulesModuleKeyRouteImport.update({
   id: '/$moduleKey',
   path: '/$moduleKey',
@@ -124,7 +136,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/sign-in': typeof SignInRoute
-  '/app/approvals': typeof AppApprovalsRoute
+  '/sign-up': typeof SignUpRoute
+  '/app/approvals': typeof AppApprovalsRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
   '/app/modules': typeof AppModulesRouteWithChildren
   '/app/notifications': typeof AppNotificationsRoute
@@ -136,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/app/admin/departments': typeof AppAdminDepartmentsRoute
   '/app/admin/modules': typeof AppAdminModulesRoute
   '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
   '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
   '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
@@ -143,7 +157,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
-  '/app/approvals': typeof AppApprovalsRoute
+  '/sign-up': typeof SignUpRoute
+  '/app/approvals': typeof AppApprovalsRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
   '/app/modules': typeof AppModulesRouteWithChildren
   '/app/notifications': typeof AppNotificationsRoute
@@ -155,6 +170,7 @@ export interface FileRoutesByTo {
   '/app/admin/departments': typeof AppAdminDepartmentsRoute
   '/app/admin/modules': typeof AppAdminModulesRoute
   '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
   '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
   '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
@@ -164,7 +180,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/sign-in': typeof SignInRoute
-  '/app/approvals': typeof AppApprovalsRoute
+  '/sign-up': typeof SignUpRoute
+  '/app/approvals': typeof AppApprovalsRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
   '/app/modules': typeof AppModulesRouteWithChildren
   '/app/notifications': typeof AppNotificationsRoute
@@ -176,6 +193,7 @@ export interface FileRoutesById {
   '/app/admin/departments': typeof AppAdminDepartmentsRoute
   '/app/admin/modules': typeof AppAdminModulesRoute
   '/app/admin/users': typeof AppAdminUsersRoute
+  '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
   '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
   '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
@@ -186,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/sign-in'
+    | '/sign-up'
     | '/app/approvals'
     | '/app/dashboard'
     | '/app/modules'
@@ -198,6 +217,7 @@ export interface FileRouteTypes {
     | '/app/admin/departments'
     | '/app/admin/modules'
     | '/app/admin/users'
+    | '/app/approvals/$entryId'
     | '/app/modules/$moduleKey'
     | '/app/modules/$moduleKey/new'
     | '/app/modules/$moduleKey/entry/$entryId'
@@ -205,6 +225,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/sign-in'
+    | '/sign-up'
     | '/app/approvals'
     | '/app/dashboard'
     | '/app/modules'
@@ -217,6 +238,7 @@ export interface FileRouteTypes {
     | '/app/admin/departments'
     | '/app/admin/modules'
     | '/app/admin/users'
+    | '/app/approvals/$entryId'
     | '/app/modules/$moduleKey'
     | '/app/modules/$moduleKey/new'
     | '/app/modules/$moduleKey/entry/$entryId'
@@ -225,6 +247,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/sign-in'
+    | '/sign-up'
     | '/app/approvals'
     | '/app/dashboard'
     | '/app/modules'
@@ -237,6 +260,7 @@ export interface FileRouteTypes {
     | '/app/admin/departments'
     | '/app/admin/modules'
     | '/app/admin/users'
+    | '/app/approvals/$entryId'
     | '/app/modules/$moduleKey'
     | '/app/modules/$moduleKey/new'
     | '/app/modules/$moduleKey/entry/$entryId'
@@ -246,6 +270,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -269,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -355,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/approvals/$entryId': {
+      id: '/app/approvals/$entryId'
+      path: '/$entryId'
+      fullPath: '/app/approvals/$entryId'
+      preLoaderRoute: typeof AppApprovalsEntryIdRouteImport
+      parentRoute: typeof AppApprovalsRoute
+    }
     '/app/modules/$moduleKey': {
       id: '/app/modules/$moduleKey'
       path: '/$moduleKey'
@@ -378,6 +417,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AppApprovalsRouteChildren {
+  AppApprovalsEntryIdRoute: typeof AppApprovalsEntryIdRoute
+}
+
+const AppApprovalsRouteChildren: AppApprovalsRouteChildren = {
+  AppApprovalsEntryIdRoute: AppApprovalsEntryIdRoute,
+}
+
+const AppApprovalsRouteWithChildren = AppApprovalsRoute._addFileChildren(
+  AppApprovalsRouteChildren,
+)
 
 interface AppModulesModuleKeyRouteChildren {
   AppModulesModuleKeyNewRoute: typeof AppModulesModuleKeyNewRoute
@@ -405,7 +456,7 @@ const AppModulesRouteWithChildren = AppModulesRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
-  AppApprovalsRoute: typeof AppApprovalsRoute
+  AppApprovalsRoute: typeof AppApprovalsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppModulesRoute: typeof AppModulesRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -420,7 +471,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppApprovalsRoute: AppApprovalsRoute,
+  AppApprovalsRoute: AppApprovalsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppModulesRoute: AppModulesRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
@@ -440,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

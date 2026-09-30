@@ -68,7 +68,8 @@ export function ManagerDashboard() {
                       </td>
                       <td className="px-4 py-3">
                         <Link
-                          to="/app/approvals"
+                          to="/app/approvals/$entryId"
+                          params={{ entryId: entry.id }}
                           className="inline-flex items-center text-primary font-medium hover:text-primary-hover transition-colors"
                         >
                           Review <ArrowRight className="ml-1 h-3 w-3" />

@@ -35,7 +35,9 @@ function NewEntryPage() {
         >
           <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to {mod.name}
         </Link>
-        <p className="text-muted-foreground">You do not have permission to create entries in this module.</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-800">
+          You do not have permission to create entries in this module.
+        </div>
       </div>
     );
   }
