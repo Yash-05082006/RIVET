@@ -1,18 +1,22 @@
 /**
- * Role-based navigation and permission helpers.
- *
- * Navigation is derived from the signed-in role (PRD section 5), so no user is
+ * Navigation derived from permissions (see permissions.ts), so no user is
  * shown an area they cannot act in.
  */
 
 import type { Role, User } from "./types";
-import { departments, modules } from "./demo-data";
+import {
+  accessibleDepartments,
+  accessibleModules,
+  canModule,
+  hasPermission,
+  type GlobalPermission,
+} from "./permissions";
 
 export interface NavItem {
   label: string;
   to: string;
-  roles: Role[];
-  /** Shown as a small trailing count when provided by the caller. */
+  /** Omitted = any signed-in user. */
+  requires?: GlobalPermission;
   countKey?: "review" | "attention" | "unread";
 }
 
@@ -24,59 +28,41 @@ export interface NavSection {
 export const navSections: NavSection[] = [
   {
     items: [
-      { label: "Home", to: "/app/dashboard", roles: ["employee", "manager", "admin"] },
-      { label: "My work", to: "/app/work", roles: ["employee", "manager", "admin"], countKey: "attention" },
-      { label: "Modules", to: "/app/modules", roles: ["employee", "manager", "admin"] },
+      { label: "Home", to: "/app/dashboard" },
+      { label: "My work", to: "/app/work", countKey: "attention" },
+      { label: "Modules", to: "/app/modules" },
     ],
   },
   {
     title: "Workflow",
     items: [
-      { label: "Approvals", to: "/app/approvals", roles: ["manager", "admin"], countKey: "review" },
-      { label: "Reports", to: "/app/reports", roles: ["employee", "manager", "admin"] },
-      { label: "Notifications", to: "/app/notifications", roles: ["employee", "manager", "admin"], countKey: "unread" },
+      { label: "Approvals", to: "/app/approvals", requires: "review", countKey: "review" },
+      { label: "Reports", to: "/app/reports" },
+      { label: "Notifications", to: "/app/notifications", countKey: "unread" },
     ],
   },
   {
     title: "Administration",
     items: [
-      { label: "Users", to: "/app/admin/users", roles: ["admin"] },
-      { label: "Departments", to: "/app/admin/departments", roles: ["admin"] },
-      { label: "Modules & access", to: "/app/admin/modules", roles: ["admin"] },
-      { label: "Audit log", to: "/app/admin/audit", roles: ["admin"] },
+      { label: "Users", to: "/app/admin/users", requires: "admin" },
+      { label: "Departments", to: "/app/admin/departments", requires: "admin" },
+      { label: "Modules & access", to: "/app/admin/modules", requires: "admin" },
+      { label: "Audit log", to: "/app/admin/audit", requires: "admin" },
     ],
   },
-  {
-    items: [{ label: "Settings", to: "/app/settings", roles: ["employee", "manager", "admin"] }],
-  },
+  { items: [{ label: "Settings", to: "/app/settings" }] },
 ];
 
-export function sectionsForRole(role: Role): NavSection[] {
+export function sectionsForUser(user: User): NavSection[] {
   return navSections
-    .map((section) => ({ ...section, items: section.items.filter((i) => i.roles.includes(role)) }))
-    .filter((section) => section.items.length > 0);
+    .map((s) => ({ ...s, items: s.items.filter((i) => !i.requires || hasPermission(user, i.requires)) }))
+    .filter((s) => s.items.length > 0);
 }
 
-export function departmentsForUser(user: User) {
-  if (user.role === "admin") return departments;
-  return departments.filter((d) => user.departmentIds.includes(d.id));
-}
-
-export function modulesForUser(user: User) {
-  if (user.role === "admin") return modules;
-  return modules.filter((m) => user.departmentIds.includes(m.departmentId) && m.active);
-}
-
-export function canCreateIn(user: User, moduleKey: string) {
-  const mod = modules.find((m) => m.key === moduleKey);
-  if (!mod || !mod.active) return false;
-  if (user.role !== "admin" && !user.departmentIds.includes(mod.departmentId)) return false;
-  return mod.createRoles.includes(user.role);
-}
-
-export function canReview(user: User) {
-  return user.role === "manager" || user.role === "admin";
-}
+export const departmentsForUser = (user: User) => accessibleDepartments(user);
+export const modulesForUser = (user: User) => accessibleModules(user);
+export const canCreateIn = (user: User, moduleKey: string) => canModule(user, "create", moduleKey);
+export const canReview = (user: User) => hasPermission(user, "review");
 
 export const roleLabel: Record<Role, string> = {
   employee: "Employee",
