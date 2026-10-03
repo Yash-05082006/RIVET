@@ -4,7 +4,7 @@ import { departmentName } from "../../../lib/rivet/demo-data";
 import { ArrowRight, CircleDot } from "lucide-react";
 import { useMemo } from "react";
 import { canCreateIn } from "../../../lib/rivet/nav";
-import { accessibleModules } from "../../../lib/rivet/permissions";
+import { accessibleModules as modulesFor } from "../../../lib/rivet/permissions";
 
 export const Route = createFileRoute("/app/modules/")({
   component: ModulesPage,
@@ -14,7 +14,7 @@ function ModulesPage() {
   const user = useCurrentUser();
 
   const accessibleModules = useMemo(() => {
-    return accessibleModules(user);
+    return modulesFor(user);
   }, [user]);
 
   return (
