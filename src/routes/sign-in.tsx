@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useRivet } from "../lib/rivet/store";
 import { authenticate } from "../lib/rivet/demo-accounts";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
 
 
@@ -54,7 +54,14 @@ function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
+      <Link
+        to="/"
+        className="absolute left-4 top-4 inline-flex items-center p-2 text-muted-foreground hover:text-foreground sm:left-6 sm:top-6"
+        aria-label="Back to homepage"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Link>
       <div className="w-full max-w-md space-y-8 rounded-[20px] border border-border bg-background p-10 shadow-sm">
         <div className="flex flex-col items-center">
           <img src={mainLogo} alt="RIVET" className="h-16 w-auto object-contain" />

@@ -40,8 +40,9 @@ function AppLayout() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background md:flex-row">
-      <header className="flex h-14 items-center justify-between border-b px-4 md:hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Mobile top bar — fixed at top on small screens */}
+      <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background px-4 md:hidden">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground font-bold">
             R
@@ -56,13 +57,13 @@ function AppLayout() {
         </button>
       </header>
 
+      {/* Sidebar — never scrolls with the page */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r bg-surface transition-transform duration-200 ease-in-out md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-surface transition-transform duration-200 ease-in-out md:static md:translate-x-0 md:flex-shrink-0 ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-full flex-col">
-          <div className="hidden h-14 items-center gap-2 border-b px-4 md:flex">
+        <div className="hidden h-14 items-center gap-2 border-b px-4 md:flex">
             <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground font-bold text-lg">
               R
             </div>
@@ -109,7 +110,8 @@ function AppLayout() {
             ))}
           </nav>
 
-          <div className="border-t p-4">
+          {/* User profile + sign-out — pinned to bottom of sidebar */}
+          <div className="shrink-0 border-t p-3">
 
             <div className="flex items-center justify-between group">
               <div className="flex items-center gap-2 overflow-hidden">
@@ -126,10 +128,10 @@ function AppLayout() {
               </button>
             </div>
           </div>
-        </div>
       </aside>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Main column — scrollable content area, takes remaining width */}
+      <div className="flex flex-1 flex-col overflow-hidden pt-14 md:pt-0">
         <header className="flex h-14 items-center justify-between border-b bg-background px-4 lg:px-8">
           <div className="flex items-center gap-4 flex-1">
             {/* Search removed as per PRD */}

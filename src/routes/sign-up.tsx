@@ -2,7 +2,7 @@ import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-ro
 import { useState } from "react";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
 import { departments } from "../lib/rivet/demo-data";
-import { CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/sign-up")({
   component: SignUpPage,
@@ -49,7 +49,14 @@ function SignUpPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
+        <Link
+          to="/"
+          className="absolute left-4 top-4 inline-flex items-center p-2 text-muted-foreground hover:text-foreground sm:left-6 sm:top-6"
+          aria-label="Back to homepage"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
         <div className="w-full max-w-md space-y-8 rounded-[20px] border border-border bg-background p-10 shadow-sm text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
           <h2 className="mt-6 text-2xl font-bold tracking-tight text-foreground">
@@ -72,7 +79,14 @@ function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
+      <Link
+        to="/"
+        className="absolute left-4 top-4 inline-flex items-center p-2 text-muted-foreground hover:text-foreground sm:left-6 sm:top-6"
+        aria-label="Back to homepage"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Link>
       <div className="w-full max-w-md space-y-6 rounded-[20px] border border-border bg-background p-8 shadow-sm">
         <div className="flex flex-col items-center">
           <img src={mainLogo} alt="RIVET" className="h-12 w-auto object-contain" />

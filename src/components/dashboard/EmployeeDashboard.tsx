@@ -8,26 +8,26 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
   switch (status) {
     case "approved":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
           <CheckCircle2 className="h-3 w-3" /> Approved
         </span>
       );
     case "rejected":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
           <XCircle className="h-3 w-3" /> Rejected
         </span>
       );
     case "submitted":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
           <Clock className="h-3 w-3" /> Under Review
         </span>
       );
     case "draft":
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
           <FileEdit className="h-3 w-3" /> Draft
         </span>
       );
@@ -38,53 +38,76 @@ export function EmployeeDashboard() {
   const user = useCurrentUser();
   const { myEntries } = useRivet();
 
-  const attentionRequired = myEntries.filter((e) => e.status === "rejected" || e.status === "draft");
-  const recentWork = myEntries.filter((e) => e.status !== "rejected" && e.status !== "draft").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
+  const attentionRequired = myEntries.filter(
+    (e) => e.status === "rejected" || e.status === "draft"
+  );
+  const recentWork = myEntries
+    .filter((e) => e.status !== "rejected" && e.status !== "draft")
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, 5);
 
   const accessibleModules = modules.filter(
     (m) => user.departmentIds.includes(m.departmentId) && m.createRoles.includes(user.role)
   );
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome, {user.name}</h1>
-        <p className="text-sm text-muted-foreground mt-1">Here is the status of your current work and pending actions.</p>
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="border-b border-border pb-4">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          Welcome back, {user.name}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Here is the status of your current work and pending actions.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left column — 2/3 width */}
+        <div className="space-y-6 lg:col-span-2">
+
+          {/* Attention Required */}
           {attentionRequired.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Attention Required</h2>
-              <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
+            <section>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Attention Required
+              </h2>
+              <div className="overflow-hidden rounded-lg border border-border bg-background">
                 <ul className="divide-y divide-border">
                   {attentionRequired.map((entry) => (
-                    <li key={entry.id} className="p-4 hover:bg-surface transition-colors flex items-start gap-4">
-                      <div className="mt-0.5">
+                    <li
+                      key={entry.id}
+                      className="flex items-start gap-3 p-4 hover:bg-surface transition-colors"
+                    >
+                      <div className="mt-0.5 shrink-0">
                         {entry.status === "rejected" ? (
-                          <AlertCircle className="h-5 w-5 text-red-600" />
+                          <AlertCircle className="h-4 w-4 text-red-500" />
                         ) : (
-                          <FileEdit className="h-5 w-5 text-slate-400" />
+                          <FileEdit className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-foreground">{moduleName(entry.moduleKey)}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {moduleName(entry.moduleKey)}
+                          </p>
                           <StatusBadge status={entry.status} />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">Entry Date: {entry.entryDate}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Entry Date: {entry.entryDate}
+                        </p>
                         {entry.managerRemarks && (
-                          <div className="mt-2 text-sm bg-red-50/50 text-red-800 p-2 rounded border border-red-100">
-                            <strong>Manager Note:</strong> {entry.managerRemarks}
+                          <div className="mt-2 rounded border border-red-100 bg-red-50/50 px-3 py-2 text-xs text-red-800">
+                            <span className="font-semibold">Manager note: </span>
+                            {entry.managerRemarks}
                           </div>
                         )}
-                        <div className="mt-3">
+                        <div className="mt-2">
                           <Link
                             to="/app/modules/$moduleKey/entry/$entryId"
                             params={{ moduleKey: entry.moduleKey, entryId: entry.id }}
-                            className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+                            search={{ from: "work" }}
+                            className="text-xs font-medium text-primary hover:text-primary-hover transition-colors"
                           >
                             {entry.status === "rejected" ? "Fix & Resubmit" : "Continue"} &rarr;
                           </Link>
@@ -94,26 +117,31 @@ export function EmployeeDashboard() {
                   ))}
                 </ul>
               </div>
-            </div>
+            </section>
           )}
 
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Recent Work</h2>
+          {/* Recent Work */}
+          <section>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Recent Work
+            </h2>
             {recentWork.length > 0 ? (
-              <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-surface text-muted-foreground text-xs uppercase font-medium border-b border-border">
+              <div className="overflow-hidden rounded-lg border border-border bg-background">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-border bg-surface text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     <tr>
-                      <th className="px-4 py-3">Module</th>
-                      <th className="px-4 py-3">Entry Date</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Last Updated</th>
+                      <th className="px-4 py-2.5 text-left">Module</th>
+                      <th className="px-4 py-2.5 text-left">Entry Date</th>
+                      <th className="px-4 py-2.5 text-left">Status</th>
+                      <th className="px-4 py-2.5 text-left">Updated</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {recentWork.map((entry) => (
                       <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-foreground">{moduleName(entry.moduleKey)}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">
+                          {moduleName(entry.moduleKey)}
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">{entry.entryDate}</td>
                         <td className="px-4 py-3">
                           <StatusBadge status={entry.status} />
@@ -127,33 +155,51 @@ export function EmployeeDashboard() {
                 </table>
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                No recent work found.
+              <div className="rounded-lg border border-dashed border-border bg-background p-8 text-center text-sm text-muted-foreground">
+                No recent work found.{" "}
+                <Link to="/app/modules" className="text-primary hover:underline">
+                  Browse modules
+                </Link>{" "}
+                to get started.
               </div>
             )}
-          </div>
+          </section>
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Accessible Modules</h2>
-          <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
-            <ul className="divide-y divide-border">
-              {accessibleModules.map((m) => (
-                <li key={m.key}>
-                  <Link
-                    to="/app/modules"
-                    className="flex items-center justify-between p-4 hover:bg-surface transition-colors"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{m.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 capitalize">{m.cadence} submission</p>
-                    </div>
-                    <div className="text-primary">&rarr;</div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Right column — 1/3 width */}
+        <div>
+          <section>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              My Modules
+            </h2>
+            {accessibleModules.length > 0 ? (
+              <div className="overflow-hidden rounded-lg border border-border bg-background">
+                <ul className="divide-y divide-border">
+                  {accessibleModules.map((m) => (
+                    <li key={m.key}>
+                      <Link
+                        to="/app/modules/$moduleKey"
+                        params={{ moduleKey: m.key }}
+                        className="flex items-center justify-between px-4 py-3 hover:bg-surface transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">{m.name}</p>
+                          <p className="text-xs capitalize text-muted-foreground">
+                            {m.cadence} submission
+                          </p>
+                        </div>
+                        <span className="ml-2 shrink-0 text-muted-foreground">&rarr;</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                No modules assigned.
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </div>
