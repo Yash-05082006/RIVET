@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { users } from "../../../lib/rivet/demo-data";
 import { useRivet } from "../../../lib/rivet/store";
 
 export const Route = createFileRoute("/app/admin/audit")({

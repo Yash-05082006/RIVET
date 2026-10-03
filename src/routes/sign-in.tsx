@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useRivet, DEMO_USER_BY_ROLE } from "../lib/rivet/store";
+import { useRivet } from "../lib/rivet/store";
+import { authenticate } from "../lib/rivet/demo-accounts";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
@@ -33,15 +34,18 @@ function SignInPage() {
       const e = email.toLowerCase().trim();
       const p = password;
 
-      if (e === "employee@rivet.com" && p === "employee@123") {
-        signIn(DEMO_USER_BY_ROLE["employee"]);
+      const userId = authenticate(e, p);
+
+
+      if (userId) {
+
+
+        signIn(userId);
+
+
         navigate({ to: "/app/dashboard" });
-      } else if (e === "manager@rivet.com" && p === "manager@123") {
-        signIn(DEMO_USER_BY_ROLE["manager"]);
-        navigate({ to: "/app/dashboard" });
-      } else if (e === "admin@rivet.com" && p === "admin@123") {
-        signIn(DEMO_USER_BY_ROLE["admin"]);
-        navigate({ to: "/app/dashboard" });
+
+
       } else {
         setError("Invalid credentials.");
         setIsAuthenticating(false);
