@@ -9,35 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/app'
-import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
-import { Route as AppApprovalsRouteImport } from './routes/app/approvals'
-import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
-import { Route as AppModulesRouteImport } from './routes/app/modules'
-import { Route as AppNotificationsRouteImport } from './routes/app/notifications'
-import { Route as AppReportsRouteImport } from './routes/app/reports'
-import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppWorkRouteImport } from './routes/app/work'
-import { Route as AppAdminAuditRouteImport } from './routes/app/admin/audit'
-import { Route as AppAdminDepartmentsRouteImport } from './routes/app/admin/departments'
-import { Route as AppAdminModulesRouteImport } from './routes/app/admin/modules'
-import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
-import { Route as AppApprovalsEntryIdRouteImport } from './routes/app/approvals/$entryId'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
+import { Route as AppReportsRouteImport } from './routes/app/reports'
+import { Route as AppNotificationsRouteImport } from './routes/app/notifications'
+import { Route as AppModulesRouteImport } from './routes/app/modules'
+import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
+import { Route as AppApprovalsRouteImport } from './routes/app/approvals'
 import { Route as AppModulesModuleKeyRouteImport } from './routes/app/modules/$moduleKey'
+import { Route as AppApprovalsEntryIdRouteImport } from './routes/app/approvals/$entryId'
+import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
+import { Route as AppAdminModulesRouteImport } from './routes/app/admin/modules'
+import { Route as AppAdminDepartmentsRouteImport } from './routes/app/admin/departments'
+import { Route as AppAdminAuditRouteImport } from './routes/app/admin/audit'
 import { Route as AppModulesModuleKeyNewRouteImport } from './routes/app/modules/$moduleKey/new'
 import { Route as AppModulesModuleKeyEntryEntryIdRouteImport } from './routes/app/modules/$moduleKey/entry.$entryId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignInRoute = SignInRouteImport.update({
@@ -45,9 +40,14 @@ const SignInRoute = SignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -55,29 +55,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppApprovalsRoute = AppApprovalsRouteImport.update({
-  id: '/approvals',
-  path: '/approvals',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppModulesRoute = AppModulesRouteImport.update({
-  id: '/modules',
-  path: '/modules',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotificationsRoute = AppNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppReportsRoute = AppReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
+const AppWorkRoute = AppWorkRouteImport.update({
+  id: '/work',
+  path: '/work',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -85,19 +65,44 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppWorkRoute = AppWorkRouteImport.update({
-  id: '/work',
-  path: '/work',
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminAuditRoute = AppAdminAuditRouteImport.update({
-  id: '/admin/audit',
-  path: '/admin/audit',
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminDepartmentsRoute = AppAdminDepartmentsRouteImport.update({
-  id: '/admin/departments',
-  path: '/admin/departments',
+const AppModulesRoute = AppModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApprovalsRoute = AppApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppModulesModuleKeyRoute = AppModulesModuleKeyRouteImport.update({
+  id: '/$moduleKey',
+  path: '/$moduleKey',
+  getParentRoute: () => AppModulesRoute,
+} as any)
+const AppApprovalsEntryIdRoute = AppApprovalsEntryIdRouteImport.update({
+  id: '/$entryId',
+  path: '/$entryId',
+  getParentRoute: () => AppApprovalsRoute,
+} as any)
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminModulesRoute = AppAdminModulesRouteImport.update({
@@ -105,20 +110,15 @@ const AppAdminModulesRoute = AppAdminModulesRouteImport.update({
   path: '/admin/modules',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
+const AppAdminDepartmentsRoute = AppAdminDepartmentsRouteImport.update({
+  id: '/admin/departments',
+  path: '/admin/departments',
   getParentRoute: () => AppRoute,
 } as any)
-const AppApprovalsEntryIdRoute = AppApprovalsEntryIdRouteImport.update({
-  id: '/$entryId',
-  path: '/$entryId',
-  getParentRoute: () => AppApprovalsRoute,
-} as any)
-const AppModulesModuleKeyRoute = AppModulesModuleKeyRouteImport.update({
-  id: '/$moduleKey',
-  path: '/$moduleKey',
-  getParentRoute: () => AppModulesRoute,
+const AppAdminAuditRoute = AppAdminAuditRouteImport.update({
+  id: '/admin/audit',
+  path: '/admin/audit',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppModulesModuleKeyNewRoute = AppModulesModuleKeyNewRouteImport.update({
   id: '/new',
@@ -275,18 +275,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-in': {
@@ -296,11 +289,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -310,39 +310,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/approvals': {
-      id: '/app/approvals'
-      path: '/approvals'
-      fullPath: '/app/approvals'
-      preLoaderRoute: typeof AppApprovalsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dashboard': {
-      id: '/app/dashboard'
-      path: '/dashboard'
-      fullPath: '/app/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/modules': {
-      id: '/app/modules'
-      path: '/modules'
-      fullPath: '/app/modules'
-      preLoaderRoute: typeof AppModulesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/notifications': {
-      id: '/app/notifications'
-      path: '/notifications'
-      fullPath: '/app/notifications'
-      preLoaderRoute: typeof AppNotificationsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/reports': {
-      id: '/app/reports'
-      path: '/reports'
-      fullPath: '/app/reports'
-      preLoaderRoute: typeof AppReportsRouteImport
+    '/app/work': {
+      id: '/app/work'
+      path: '/work'
+      fullPath: '/app/work'
+      preLoaderRoute: typeof AppWorkRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/settings': {
@@ -352,25 +324,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/work': {
-      id: '/app/work'
-      path: '/work'
-      fullPath: '/app/work'
-      preLoaderRoute: typeof AppWorkRouteImport
+    '/app/reports': {
+      id: '/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/admin/audit': {
-      id: '/app/admin/audit'
-      path: '/admin/audit'
-      fullPath: '/app/admin/audit'
-      preLoaderRoute: typeof AppAdminAuditRouteImport
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/admin/departments': {
-      id: '/app/admin/departments'
-      path: '/admin/departments'
-      fullPath: '/app/admin/departments'
-      preLoaderRoute: typeof AppAdminDepartmentsRouteImport
+    '/app/modules': {
+      id: '/app/modules'
+      path: '/modules'
+      fullPath: '/app/modules'
+      preLoaderRoute: typeof AppModulesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dashboard': {
+      id: '/app/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/approvals': {
+      id: '/app/approvals'
+      path: '/approvals'
+      fullPath: '/app/approvals'
+      preLoaderRoute: typeof AppApprovalsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modules/$moduleKey': {
+      id: '/app/modules/$moduleKey'
+      path: '/$moduleKey'
+      fullPath: '/app/modules/$moduleKey'
+      preLoaderRoute: typeof AppModulesModuleKeyRouteImport
+      parentRoute: typeof AppModulesRoute
+    }
+    '/app/approvals/$entryId': {
+      id: '/app/approvals/$entryId'
+      path: '/$entryId'
+      fullPath: '/app/approvals/$entryId'
+      preLoaderRoute: typeof AppApprovalsEntryIdRouteImport
+      parentRoute: typeof AppApprovalsRoute
+    }
+    '/app/admin/users': {
+      id: '/app/admin/users'
+      path: '/admin/users'
+      fullPath: '/app/admin/users'
+      preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/admin/modules': {
@@ -380,26 +387,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminModulesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/admin/users': {
-      id: '/app/admin/users'
-      path: '/admin/users'
-      fullPath: '/app/admin/users'
-      preLoaderRoute: typeof AppAdminUsersRouteImport
+    '/app/admin/departments': {
+      id: '/app/admin/departments'
+      path: '/admin/departments'
+      fullPath: '/app/admin/departments'
+      preLoaderRoute: typeof AppAdminDepartmentsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/approvals/$entryId': {
-      id: '/app/approvals/$entryId'
-      path: '/$entryId'
-      fullPath: '/app/approvals/$entryId'
-      preLoaderRoute: typeof AppApprovalsEntryIdRouteImport
-      parentRoute: typeof AppApprovalsRoute
-    }
-    '/app/modules/$moduleKey': {
-      id: '/app/modules/$moduleKey'
-      path: '/$moduleKey'
-      fullPath: '/app/modules/$moduleKey'
-      preLoaderRoute: typeof AppModulesModuleKeyRouteImport
-      parentRoute: typeof AppModulesRoute
+    '/app/admin/audit': {
+      id: '/app/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/app/admin/audit'
+      preLoaderRoute: typeof AppAdminAuditRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/modules/$moduleKey/new': {
       id: '/app/modules/$moduleKey/new'
