@@ -2,7 +2,9 @@ import { Link, Outlet, createFileRoute, useNavigate, useLocation, redirect, Navi
 import { Menu, Bell, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useRivet } from "../lib/rivet/store";
-import { sectionsForRole, roleLabel } from "../lib/rivet/nav";
+import { sectionsForUser, roleLabel } from "../lib/rivet/nav";
+import { canAccessPath } from "../lib/rivet/permissions";
+import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: () => {
@@ -29,7 +31,8 @@ function AppLayout() {
     return <Navigate to="/sign-in" replace />;
   }
 
-  const navSections = sectionsForRole(user.role);
+  const navSections = sectionsForUser(user)
+  const allowed = canAccessPath(user, location.pathname);
 
   const handleSignOut = () => {
     signOut();
@@ -143,7 +146,18 @@ function AppLayout() {
 
         <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-8">
           <div className="mx-auto max-w-6xl">
-            <Outlet />
+            {allowed ? (
+              <Outlet />
+            ) : (
+              <div className="space-y-4">
+                <Link to="/app/dashboard" aria-label="Back" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+                <div className="rounded-lg border border-border bg-surface p-6 text-sm text-foreground">
+                  You do not have access to this page.
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

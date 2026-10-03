@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useRivet, DEMO_USER_BY_ROLE } from "../lib/rivet/store";
+import { useRivet } from "../lib/rivet/store";
+import { authenticate } from "../lib/rivet/demo-accounts";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
 import structuredDailyLogsImg from "../../assets/Structured_Daily_Logs.png";
 import approvalWorkflowsImg from "../../assets/Approval_Workflows.png";
@@ -182,15 +183,14 @@ function Hero() {
     setTimeout(() => {
       const e = email.toLowerCase().trim();
       const p = password;
-      if (e === "employee@rivet.com" && p === "employee@123") {
-        signIn(DEMO_USER_BY_ROLE["employee"]);
+      const userId = authenticate(e, p);
+
+      if (userId) {
+
+        signIn(userId);
+
         navigate({ to: "/app/dashboard" });
-      } else if (e === "manager@rivet.com" && p === "manager@123") {
-        signIn(DEMO_USER_BY_ROLE["manager"]);
-        navigate({ to: "/app/dashboard" });
-      } else if (e === "admin@rivet.com" && p === "admin@123") {
-        signIn(DEMO_USER_BY_ROLE["admin"]);
-        navigate({ to: "/app/dashboard" });
+
       } else {
         setAuthError("Incorrect email or password.");
         setIsAuthenticating(false);

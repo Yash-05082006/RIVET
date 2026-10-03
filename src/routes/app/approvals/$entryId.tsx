@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Check, X, AlertCircle } from "lucide-react";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
 import { getModule, departmentName, users } from "../../../lib/rivet/demo-data";
-import { canReview } from "../../../lib/rivet/nav";
+import { canReviewEntry } from "../../../lib/rivet/permissions";
 
 export const Route = createFileRoute("/app/approvals/$entryId")({
   component: EntryReviewPage,
@@ -35,9 +35,7 @@ function EntryReviewPage() {
     );
   }
 
-  const isAuthorizedDept = user.role === "admin" || user.departmentIds.includes(entry.departmentId);
-  
-  if (!canReview(user) || !isAuthorizedDept) {
+  if (!canReviewEntry(user, entry)) {
     return (
       <div className="space-y-4">
         <Link to="/app/approvals" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">

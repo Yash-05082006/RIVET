@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCurrentUser } from "../../lib/rivet/store";
-import { modules, departmentName } from "../../lib/rivet/demo-data";
+import { useCurrentUser } from "../../../lib/rivet/store";
+import { departmentName } from "../../../lib/rivet/demo-data";
 import { ArrowRight, CircleDot } from "lucide-react";
 import { useMemo } from "react";
-import { canCreateIn } from "../../lib/rivet/nav";
+import { canCreateIn } from "../../../lib/rivet/nav";
+import { accessibleModules as modulesFor } from "../../../lib/rivet/permissions";
 
-export const Route = createFileRoute("/app/modules")({
+export const Route = createFileRoute("/app/modules/")({
   component: ModulesPage,
 });
 
@@ -13,8 +14,7 @@ function ModulesPage() {
   const user = useCurrentUser();
 
   const accessibleModules = useMemo(() => {
-    if (user.role === "admin") return modules;
-    return modules.filter((m) => user.departmentIds.includes(m.departmentId));
+    return modulesFor(user);
   }, [user]);
 
   return (

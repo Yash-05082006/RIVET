@@ -14,9 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AppIndexRouteImport } from './routes/app/index'
-import { Route as AppApprovalsRouteImport } from './routes/app/approvals'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
-import { Route as AppModulesRouteImport } from './routes/app/modules'
 import { Route as AppNotificationsRouteImport } from './routes/app/notifications'
 import { Route as AppReportsRouteImport } from './routes/app/reports'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
@@ -25,8 +23,10 @@ import { Route as AppAdminAuditRouteImport } from './routes/app/admin/audit'
 import { Route as AppAdminDepartmentsRouteImport } from './routes/app/admin/departments'
 import { Route as AppAdminModulesRouteImport } from './routes/app/admin/modules'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
+import { Route as AppApprovalsIndexRouteImport } from './routes/app/approvals/index'
 import { Route as AppApprovalsEntryIdRouteImport } from './routes/app/approvals/$entryId'
-import { Route as AppModulesModuleKeyRouteImport } from './routes/app/modules/$moduleKey'
+import { Route as AppModulesIndexRouteImport } from './routes/app/modules/index'
+import { Route as AppModulesModuleKeyIndexRouteImport } from './routes/app/modules/$moduleKey/index'
 import { Route as AppModulesModuleKeyNewRouteImport } from './routes/app/modules/$moduleKey/new'
 import { Route as AppModulesModuleKeyEntryEntryIdRouteImport } from './routes/app/modules/$moduleKey/entry.$entryId'
 
@@ -55,19 +55,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppApprovalsRoute = AppApprovalsRouteImport.update({
-  id: '/approvals',
-  path: '/approvals',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppModulesRoute = AppModulesRouteImport.update({
-  id: '/modules',
-  path: '/modules',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
@@ -110,26 +100,37 @@ const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AppRoute,
 } as any)
+const AppApprovalsIndexRoute = AppApprovalsIndexRouteImport.update({
+  id: '/approvals/',
+  path: '/approvals/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppApprovalsEntryIdRoute = AppApprovalsEntryIdRouteImport.update({
-  id: '/$entryId',
-  path: '/$entryId',
-  getParentRoute: () => AppApprovalsRoute,
+  id: '/approvals/$entryId',
+  path: '/approvals/$entryId',
+  getParentRoute: () => AppRoute,
 } as any)
-const AppModulesModuleKeyRoute = AppModulesModuleKeyRouteImport.update({
-  id: '/$moduleKey',
-  path: '/$moduleKey',
-  getParentRoute: () => AppModulesRoute,
+const AppModulesIndexRoute = AppModulesIndexRouteImport.update({
+  id: '/modules/',
+  path: '/modules/',
+  getParentRoute: () => AppRoute,
 } as any)
+const AppModulesModuleKeyIndexRoute =
+  AppModulesModuleKeyIndexRouteImport.update({
+    id: '/modules/$moduleKey/',
+    path: '/modules/$moduleKey/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppModulesModuleKeyNewRoute = AppModulesModuleKeyNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AppModulesModuleKeyRoute,
+  id: '/modules/$moduleKey/new',
+  path: '/modules/$moduleKey/new',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppModulesModuleKeyEntryEntryIdRoute =
   AppModulesModuleKeyEntryEntryIdRouteImport.update({
-    id: '/entry/$entryId',
-    path: '/entry/$entryId',
-    getParentRoute: () => AppModulesModuleKeyRoute,
+    id: '/modules/$moduleKey/entry/$entryId',
+    path: '/modules/$moduleKey/entry/$entryId',
+    getParentRoute: () => AppRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -137,9 +138,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/app/approvals': typeof AppApprovalsRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
-  '/app/modules': typeof AppModulesRouteWithChildren
   '/app/notifications': typeof AppNotificationsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -150,17 +149,17 @@ export interface FileRoutesByFullPath {
   '/app/admin/modules': typeof AppAdminModulesRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
-  '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
+  '/app/approvals/': typeof AppApprovalsIndexRoute
+  '/app/modules/': typeof AppModulesIndexRoute
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
+  '/app/modules/$moduleKey/': typeof AppModulesModuleKeyIndexRoute
   '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/app/approvals': typeof AppApprovalsRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
-  '/app/modules': typeof AppModulesRouteWithChildren
   '/app/notifications': typeof AppNotificationsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -171,8 +170,10 @@ export interface FileRoutesByTo {
   '/app/admin/modules': typeof AppAdminModulesRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
-  '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
+  '/app/approvals': typeof AppApprovalsIndexRoute
+  '/app/modules': typeof AppModulesIndexRoute
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
+  '/app/modules/$moduleKey': typeof AppModulesModuleKeyIndexRoute
   '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
 }
 export interface FileRoutesById {
@@ -181,9 +182,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/app/approvals': typeof AppApprovalsRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
-  '/app/modules': typeof AppModulesRouteWithChildren
   '/app/notifications': typeof AppNotificationsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -194,8 +193,10 @@ export interface FileRoutesById {
   '/app/admin/modules': typeof AppAdminModulesRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
-  '/app/modules/$moduleKey': typeof AppModulesModuleKeyRouteWithChildren
+  '/app/approvals/': typeof AppApprovalsIndexRoute
+  '/app/modules/': typeof AppModulesIndexRoute
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
+  '/app/modules/$moduleKey/': typeof AppModulesModuleKeyIndexRoute
   '/app/modules/$moduleKey/entry/$entryId': typeof AppModulesModuleKeyEntryEntryIdRoute
 }
 export interface FileRouteTypes {
@@ -205,9 +206,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/sign-in'
     | '/sign-up'
-    | '/app/approvals'
     | '/app/dashboard'
-    | '/app/modules'
     | '/app/notifications'
     | '/app/reports'
     | '/app/settings'
@@ -218,17 +217,17 @@ export interface FileRouteTypes {
     | '/app/admin/modules'
     | '/app/admin/users'
     | '/app/approvals/$entryId'
-    | '/app/modules/$moduleKey'
+    | '/app/approvals/'
+    | '/app/modules/'
     | '/app/modules/$moduleKey/new'
+    | '/app/modules/$moduleKey/'
     | '/app/modules/$moduleKey/entry/$entryId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/sign-in'
     | '/sign-up'
-    | '/app/approvals'
     | '/app/dashboard'
-    | '/app/modules'
     | '/app/notifications'
     | '/app/reports'
     | '/app/settings'
@@ -239,8 +238,10 @@ export interface FileRouteTypes {
     | '/app/admin/modules'
     | '/app/admin/users'
     | '/app/approvals/$entryId'
-    | '/app/modules/$moduleKey'
+    | '/app/approvals'
+    | '/app/modules'
     | '/app/modules/$moduleKey/new'
+    | '/app/modules/$moduleKey'
     | '/app/modules/$moduleKey/entry/$entryId'
   id:
     | '__root__'
@@ -248,9 +249,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/sign-in'
     | '/sign-up'
-    | '/app/approvals'
     | '/app/dashboard'
-    | '/app/modules'
     | '/app/notifications'
     | '/app/reports'
     | '/app/settings'
@@ -261,8 +260,10 @@ export interface FileRouteTypes {
     | '/app/admin/modules'
     | '/app/admin/users'
     | '/app/approvals/$entryId'
-    | '/app/modules/$moduleKey'
+    | '/app/approvals/'
+    | '/app/modules/'
     | '/app/modules/$moduleKey/new'
+    | '/app/modules/$moduleKey/'
     | '/app/modules/$moduleKey/entry/$entryId'
   fileRoutesById: FileRoutesById
 }
@@ -310,25 +311,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/approvals': {
-      id: '/app/approvals'
-      path: '/approvals'
-      fullPath: '/app/approvals'
-      preLoaderRoute: typeof AppApprovalsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/dashboard': {
       id: '/app/dashboard'
       path: '/dashboard'
       fullPath: '/app/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/modules': {
-      id: '/app/modules'
-      path: '/modules'
-      fullPath: '/app/modules'
-      preLoaderRoute: typeof AppModulesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/notifications': {
@@ -387,78 +374,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/approvals/': {
+      id: '/app/approvals/'
+      path: '/approvals'
+      fullPath: '/app/approvals/'
+      preLoaderRoute: typeof AppApprovalsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/approvals/$entryId': {
       id: '/app/approvals/$entryId'
-      path: '/$entryId'
+      path: '/approvals/$entryId'
       fullPath: '/app/approvals/$entryId'
       preLoaderRoute: typeof AppApprovalsEntryIdRouteImport
-      parentRoute: typeof AppApprovalsRoute
+      parentRoute: typeof AppRoute
     }
-    '/app/modules/$moduleKey': {
-      id: '/app/modules/$moduleKey'
-      path: '/$moduleKey'
-      fullPath: '/app/modules/$moduleKey'
-      preLoaderRoute: typeof AppModulesModuleKeyRouteImport
-      parentRoute: typeof AppModulesRoute
+    '/app/modules/': {
+      id: '/app/modules/'
+      path: '/modules'
+      fullPath: '/app/modules/'
+      preLoaderRoute: typeof AppModulesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modules/$moduleKey/': {
+      id: '/app/modules/$moduleKey/'
+      path: '/modules/$moduleKey'
+      fullPath: '/app/modules/$moduleKey/'
+      preLoaderRoute: typeof AppModulesModuleKeyIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/modules/$moduleKey/new': {
       id: '/app/modules/$moduleKey/new'
-      path: '/new'
+      path: '/modules/$moduleKey/new'
       fullPath: '/app/modules/$moduleKey/new'
       preLoaderRoute: typeof AppModulesModuleKeyNewRouteImport
-      parentRoute: typeof AppModulesModuleKeyRoute
+      parentRoute: typeof AppRoute
     }
     '/app/modules/$moduleKey/entry/$entryId': {
       id: '/app/modules/$moduleKey/entry/$entryId'
-      path: '/entry/$entryId'
+      path: '/modules/$moduleKey/entry/$entryId'
       fullPath: '/app/modules/$moduleKey/entry/$entryId'
       preLoaderRoute: typeof AppModulesModuleKeyEntryEntryIdRouteImport
-      parentRoute: typeof AppModulesModuleKeyRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
 
-interface AppApprovalsRouteChildren {
-  AppApprovalsEntryIdRoute: typeof AppApprovalsEntryIdRoute
-}
-
-const AppApprovalsRouteChildren: AppApprovalsRouteChildren = {
-  AppApprovalsEntryIdRoute: AppApprovalsEntryIdRoute,
-}
-
-const AppApprovalsRouteWithChildren = AppApprovalsRoute._addFileChildren(
-  AppApprovalsRouteChildren,
-)
-
-interface AppModulesModuleKeyRouteChildren {
-  AppModulesModuleKeyNewRoute: typeof AppModulesModuleKeyNewRoute
-  AppModulesModuleKeyEntryEntryIdRoute: typeof AppModulesModuleKeyEntryEntryIdRoute
-}
-
-const AppModulesModuleKeyRouteChildren: AppModulesModuleKeyRouteChildren = {
-  AppModulesModuleKeyNewRoute: AppModulesModuleKeyNewRoute,
-  AppModulesModuleKeyEntryEntryIdRoute: AppModulesModuleKeyEntryEntryIdRoute,
-}
-
-const AppModulesModuleKeyRouteWithChildren =
-  AppModulesModuleKeyRoute._addFileChildren(AppModulesModuleKeyRouteChildren)
-
-interface AppModulesRouteChildren {
-  AppModulesModuleKeyRoute: typeof AppModulesModuleKeyRouteWithChildren
-}
-
-const AppModulesRouteChildren: AppModulesRouteChildren = {
-  AppModulesModuleKeyRoute: AppModulesModuleKeyRouteWithChildren,
-}
-
-const AppModulesRouteWithChildren = AppModulesRoute._addFileChildren(
-  AppModulesRouteChildren,
-)
-
 interface AppRouteChildren {
-  AppApprovalsRoute: typeof AppApprovalsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
-  AppModulesRoute: typeof AppModulesRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -468,12 +430,16 @@ interface AppRouteChildren {
   AppAdminDepartmentsRoute: typeof AppAdminDepartmentsRoute
   AppAdminModulesRoute: typeof AppAdminModulesRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
+  AppApprovalsEntryIdRoute: typeof AppApprovalsEntryIdRoute
+  AppApprovalsIndexRoute: typeof AppApprovalsIndexRoute
+  AppModulesIndexRoute: typeof AppModulesIndexRoute
+  AppModulesModuleKeyNewRoute: typeof AppModulesModuleKeyNewRoute
+  AppModulesModuleKeyIndexRoute: typeof AppModulesModuleKeyIndexRoute
+  AppModulesModuleKeyEntryEntryIdRoute: typeof AppModulesModuleKeyEntryEntryIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppApprovalsRoute: AppApprovalsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
-  AppModulesRoute: AppModulesRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
@@ -483,6 +449,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminDepartmentsRoute: AppAdminDepartmentsRoute,
   AppAdminModulesRoute: AppAdminModulesRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
+  AppApprovalsEntryIdRoute: AppApprovalsEntryIdRoute,
+  AppApprovalsIndexRoute: AppApprovalsIndexRoute,
+  AppModulesIndexRoute: AppModulesIndexRoute,
+  AppModulesModuleKeyNewRoute: AppModulesModuleKeyNewRoute,
+  AppModulesModuleKeyIndexRoute: AppModulesModuleKeyIndexRoute,
+  AppModulesModuleKeyEntryEntryIdRoute: AppModulesModuleKeyEntryEntryIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
