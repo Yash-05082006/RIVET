@@ -29,7 +29,7 @@ function EntryDetailPage() {
     return (
       <div className="space-y-4">
         <Link to={backLink} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <p className="text-muted-foreground">Entry not found.</p>
       </div>
@@ -49,7 +49,7 @@ function EntryDetailPage() {
           to={backLink}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-800">
           You do not have permission to access this entry.
@@ -64,7 +64,7 @@ function EntryDetailPage() {
         to={backLink}
         className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
+        <ArrowLeft className="h-4 w-4" />
       </Link>
       <EntryForm moduleDef={mod} existingEntry={entry} />
     </div>

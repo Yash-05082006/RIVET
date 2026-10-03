@@ -1,4 +1,4 @@
-import { Link, Outlet, createFileRoute, useNavigate, useLocation, redirect } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useNavigate, useLocation, redirect, Navigate } from "@tanstack/react-router";
 import { Menu, Bell, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useRivet } from "../lib/rivet/store";
@@ -21,12 +21,12 @@ function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   if (!ready) return null;
 
   if (!user) {
-    navigate({ to: "/sign-in", replace: true });
-    return null;
+    return <Navigate to="/sign-in" replace />;
   }
 
   const navSections = sectionsForRole(user.role);
@@ -118,7 +118,7 @@ function AppLayout() {
                   <span className="truncate text-xs text-muted-foreground">{roleLabel[user.role]}</span>
                 </div>
               </div>
-              <button onClick={handleSignOut} className="p-1 text-muted-foreground hover:text-foreground" title="Sign out">
+              <button onClick={() => setShowSignOutDialog(true)} className="p-1 text-muted-foreground hover:text-foreground" title="Sign out">
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
@@ -153,6 +153,29 @@ function AppLayout() {
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
+      )}
+
+      {showSignOutDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg">
+            <h3 className="text-lg font-semibold text-foreground">Sign out</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Are you sure you want to sign out?</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowSignOutDialog(false)}
+                className="rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

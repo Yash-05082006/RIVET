@@ -28,7 +28,7 @@ function EntryReviewPage() {
     return (
       <div className="space-y-4">
         <Link to="/app/approvals" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Approvals
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <p className="text-muted-foreground">Entry not found.</p>
       </div>
@@ -41,7 +41,7 @@ function EntryReviewPage() {
     return (
       <div className="space-y-4">
         <Link to="/app/approvals" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Approvals
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-800">
           You do not have permission to review this entry.
@@ -54,7 +54,7 @@ function EntryReviewPage() {
     return (
       <div className="space-y-4">
         <Link to="/app/approvals" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Approvals
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-800">
           This entry is currently {entry.status} and cannot be reviewed.
@@ -91,7 +91,7 @@ function EntryReviewPage() {
           to="/app/approvals"
           className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Approvals
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         
         <div className="flex items-start justify-between">

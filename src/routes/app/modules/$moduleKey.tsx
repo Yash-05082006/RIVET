@@ -40,7 +40,7 @@ function ModuleDetailPage() {
     return (
       <div className="space-y-4">
         <Link to="/app/modules" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Modules
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <p className="text-muted-foreground">Module not found.</p>
       </div>
@@ -65,7 +65,7 @@ function ModuleDetailPage() {
           to="/app/modules"
           className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-3"
         >
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Modules
+          <ArrowLeft className="h-4 w-4" />
         </Link>
 
         <div className="flex items-start justify-between gap-4">

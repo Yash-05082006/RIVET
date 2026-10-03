@@ -18,7 +18,7 @@ function NewEntryPage() {
     return (
       <div className="space-y-4">
         <Link to="/app/modules" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Modules
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <p className="text-muted-foreground">Module not found.</p>
       </div>
@@ -33,7 +33,7 @@ function NewEntryPage() {
           params={{ moduleKey }}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to {mod.name}
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-800">
           You do not have permission to create entries in this module.
@@ -49,7 +49,7 @@ function NewEntryPage() {
         params={{ moduleKey }}
         className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to {mod.name}
+        <ArrowLeft className="h-4 w-4" />
       </Link>
       <EntryForm moduleDef={mod} />
     </div>
