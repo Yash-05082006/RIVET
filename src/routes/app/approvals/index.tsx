@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock, ArrowRight } from "lucide-react";
-import { useRivet, useCurrentUser } from "../../lib/rivet/store";
-import { moduleName, departmentName, users } from "../../lib/rivet/demo-data";
-import { canReview } from "../../lib/rivet/nav";
+import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
+import { moduleName, departmentName, users } from "../../../lib/rivet/demo-data";
+import { canReview } from "../../../lib/rivet/nav";
 
-export const Route = createFileRoute("/app/approvals")({
+export const Route = createFileRoute("/app/approvals/")({
   component: ApprovalsPage,
 });
 

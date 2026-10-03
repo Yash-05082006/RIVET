@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { canViewEntry } from "../../../../lib/rivet/permissions";
 import { getModule } from "../../../../lib/rivet/demo-data";
 import { useRivet, useCurrentUser } from "../../../../lib/rivet/store";
 import { EntryForm } from "../../../../components/work/EntryForm";
@@ -23,7 +24,6 @@ function EntryDetailPage() {
   const entry = entries.find((e) => e.id === entryId);
 
   const backLink = from === "work" ? "/app/work" : `/app/modules/${moduleKey}`;
-  const backLabel = from === "work" ? "Back to My Work" : `Back to ${mod?.name ?? 'Module'}`;
 
   if (!mod || !entry) {
     return (
@@ -37,10 +37,7 @@ function EntryDetailPage() {
   }
 
   // Only the author (or admin) should be able to access this entry
-  const canAccess =
-    entry.authorId === user.id ||
-    user.role === "admin" ||
-    (user.role === "manager" && user.departmentIds.includes(entry.departmentId));
+  const canAccess = canViewEntry(user, entry);
 
   if (!canAccess) {
     return (

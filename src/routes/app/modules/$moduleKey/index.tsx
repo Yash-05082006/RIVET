@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Plus } from "lucide-react";
-import { getModule, departmentName, moduleName } from "../../../lib/rivet/demo-data";
-import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
-import { canCreateIn } from "../../../lib/rivet/nav";
-import type { LogEntry } from "../../../lib/rivet/types";
+import { getModule, departmentName, moduleName } from "../../../../lib/rivet/demo-data";
+import { useRivet, useCurrentUser } from "../../../../lib/rivet/store";
+import { canCreateIn } from "../../../../lib/rivet/nav";
+import type { LogEntry } from "../../../../lib/rivet/types";
 
-export const Route = createFileRoute("/app/modules/$moduleKey")({
+export const Route = createFileRoute("/app/modules/$moduleKey/")({
   component: ModuleDetailPage,
 });
 

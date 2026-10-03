@@ -1,17 +1,7 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
-import { users } from "../../../lib/rivet/demo-data";
 
 export const Route = createFileRoute("/app/admin/departments")({
-  beforeLoad: () => {
-    if (typeof window !== "undefined") {
-      const storedId = window.localStorage.getItem("rivet.session.userId");
-      const user = users.find(u => u.id === storedId);
-      if (!user || user.role !== "admin") {
-        throw redirect({ to: "/app/dashboard" });
-      }
-    }
-  },
   component: DepartmentsAdminPage,
 });
 
