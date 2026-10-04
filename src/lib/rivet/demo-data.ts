@@ -70,11 +70,10 @@ export const modules: ModuleDef[] = [
     createRoles: ["employee", "manager", "admin"],
     fields: [
       { key: "date", label: "Date", type: "date", required: true },
-      { key: "dayOfWeek", label: "Day of week", type: "auto", required: true, note: "Computed" },
-      { key: "activity", label: "Activity description", type: "longtext", required: true },
-      { key: "managerRemarks", label: "Manager remarks", type: "text", required: false },
+      { key: "dayOfWeek", label: "Day of Week", type: "auto", required: false, note: "Computed from Date" },
+      { key: "activity", label: "Activity Description", type: "longtext", required: true },
     ],
-    tableFields: ["date", "activity"],
+    tableFields: ["date", "dayOfWeek", "activity"],
   },
   {
     key: "weekly-meeting-report",
