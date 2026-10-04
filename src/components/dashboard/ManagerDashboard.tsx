@@ -52,7 +52,7 @@ export function ManagerDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left / main column — review queue */}
+        {/* Left / main column - review queue */}
         <div className="space-y-0 lg:col-span-2">
           <section>
             <div className="mb-3 flex items-center justify-between">
@@ -111,14 +111,14 @@ export function ManagerDashboard() {
               <div className="rounded-lg border border-dashed border-border bg-background p-10 text-center">
                 <CheckCircle2 className="mx-auto mb-2 h-7 w-7 text-green-400" />
                 <p className="text-sm text-muted-foreground">
-                  All caught up — no pending submissions.
+                  All caught up - no pending submissions.
                 </p>
               </div>
             )}
           </section>
         </div>
 
-        {/* Right column — recent decisions */}
+        {/* Right column - recent decisions */}
         <div>
           <section>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

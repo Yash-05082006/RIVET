@@ -124,7 +124,7 @@ export function AdminDashboard() {
                       <span className="text-xs opacity-60">({record.entityId})</span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {record.departmentId ? departmentName(record.departmentId) : "—"}
+                      {record.departmentId ? departmentName(record.departmentId) : "-"}
                     </td>
                   </tr>
                 ))

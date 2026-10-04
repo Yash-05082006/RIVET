@@ -836,7 +836,7 @@ function WorkflowSection() {
               </div>
 
               {/* ════════════════════════════════════════════════════════════
-                  TIER 3: TERTIARY NODES (Small Squircle Icon Tiles — 38px × 38px)
+                  TIER 3: TERTIARY NODES (Small Squircle Icon Tiles - 38px × 38px)
               ════════════════════════════════════════════════════════════ */}
 
               {/* ── 4 RECURRING RIVET FAVICON CONNECTOR NODES ── */}
@@ -1157,7 +1157,7 @@ function RolesSection() {
           <div className="mx-auto max-w-5xl">
             {/* Visual connecting spine across the 3 roles */}
             <div className="relative flex items-center justify-between px-16">
-              {/* SVG Connecting Paths with Pulses — uses absolute SVG viewBox coords for reliable positioning */}
+              {/* SVG Connecting Paths with Pulses - uses absolute SVG viewBox coords for reliable positioning */}
               <svg className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 w-full" viewBox="0 0 1000 40" preserveAspectRatio="none" fill="none">
                 {/* Static background rail */}
                 <line x1="130" y1="20" x2="870" y2="20" stroke="rgba(179,65,56,0.15)" strokeWidth="2" />
@@ -1373,7 +1373,7 @@ function RolesSection() {
                 <div className="mt-2.5 space-y-2">
                   <div className="rounded-lg border border-border/70 bg-background p-2 text-[11px] shadow-sm">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-foreground">Team Member — Log #1042</span>
+                      <span className="font-semibold text-foreground">Team Member - Log #1042</span>
                       <span className="font-mono text-[10px] text-muted-foreground">4 items</span>
                     </div>
                     <div className="mt-2 flex items-center gap-1.5">

@@ -1,10 +1,10 @@
 /**
- * EntryForm — dynamic form for creating/editing a LogEntry.
+ * EntryForm - dynamic form for creating/editing a LogEntry.
  *
  * Renders fields from ModuleDef.fields. Keeps the form state locally during
  * editing and delegates persistence to the RivetProvider store actions
  * (createEntry, updateEntryValues, submitEntry). When the backend is wired,
- * only the store actions need replacing — this component stays the same.
+ * only the store actions need replacing - this component stays the same.
  */
 import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -98,7 +98,7 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
   }
 
   function checkDuplicate(entryDate: string): boolean {
-    if (existingEntry) return false; // editing an existing one — no duplicate issue
+    if (existingEntry) return false; // editing an existing one - no duplicate issue
     return myEntries.some(
       (e) =>
         e.moduleKey === moduleDef.key &&
@@ -178,8 +178,6 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
           <span>{departmentName(moduleDef.departmentId)}</span>
           <span>·</span>
           <span className="capitalize">{moduleDef.cadence} submission</span>
-          <span>·</span>
-          <span>{moduleDef.reference}</span>
           {existingEntry && (
             <>
               <span>·</span>
@@ -196,7 +194,7 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
           <div>
-            <p className="text-sm font-semibold text-red-800">Entry rejected — action required</p>
+            <p className="text-sm font-semibold text-red-800">Entry rejected - action required</p>
             <p className="mt-1 text-sm text-red-700">{existingEntry.managerRemarks}</p>
           </div>
         </div>

@@ -44,7 +44,7 @@ function WorkPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">My Work</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          All your log entries across every module — drafts, pending reviews, and completed work.
+          All your log entries across every module - drafts, pending reviews, and completed work.
         </p>
       </div>
 

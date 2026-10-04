@@ -74,8 +74,6 @@ function ModuleDetailPage() {
               <span>{departmentName(mod.departmentId)}</span>
               <span>·</span>
               <span className="capitalize">{mod.cadence} submission</span>
-              <span>·</span>
-              <span>{mod.reference}</span>
               {mod.approvalRequired && (
                 <>
                   <span>·</span>

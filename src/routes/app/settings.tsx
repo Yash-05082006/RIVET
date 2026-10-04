@@ -19,7 +19,7 @@ function SettingsPage() {
         </p>
       </div>
 
-      {/* Current account info — read-only until settings backend is connected */}
+      {/* Current account info - read-only until settings backend is connected */}
       <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
         <div className="bg-surface px-5 py-4 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Account</h2>

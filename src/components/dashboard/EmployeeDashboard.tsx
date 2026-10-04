@@ -63,7 +63,7 @@ export function EmployeeDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left column — 2/3 width */}
+        {/* Left column - 2/3 width */}
         <div className="space-y-6 lg:col-span-2">
 
           {/* Attention Required */}
@@ -166,7 +166,7 @@ export function EmployeeDashboard() {
           </section>
         </div>
 
-        {/* Right column — 1/3 width */}
+        {/* Right column - 1/3 width */}
         <div>
           <section>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
