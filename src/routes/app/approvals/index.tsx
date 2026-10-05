@@ -37,40 +37,40 @@ function ApprovalsPage() {
       </div>
 
       <div className="space-y-3">
-        <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-border bg-background shadow-sm overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-surface text-muted-foreground text-xs uppercase font-medium border-b border-border">
               <tr>
-                <th className="px-4 py-3">Employee</th>
-                <th className="px-4 py-3">Department</th>
+                <th className="px-4 py-3 whitespace-nowrap">Employee</th>
+                <th className="px-4 py-3 whitespace-nowrap">Department</th>
                 <th className="px-4 py-3">Module</th>
-                <th className="px-4 py-3">Entry Date</th>
-                <th className="px-4 py-3">Submitted At</th>
-                <th className="px-4 py-3 text-right">Action</th>
+                <th className="px-4 py-3 whitespace-nowrap">Entry Date</th>
+                <th className="px-4 py-3 whitespace-nowrap">Submitted At</th>
+                <th className="px-4 py-3 text-right whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {reviewQueue.length > 0 ? (
                 reviewQueue.map((entry) => (
                   <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{getAuthorName(entry.authorId)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{departmentName(entry.departmentId)}</td>
+                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{getAuthorName(entry.authorId)}</td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{departmentName(entry.departmentId)}</td>
                     <td className="px-4 py-3 text-muted-foreground">{moduleName(entry.moduleKey)}</td>
-                    <td className="px-4 py-3 text-foreground">{entry.entryDate}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3 w-3" />
+                    <td className="px-4 py-3 text-foreground whitespace-nowrap">{entry.entryDate}</td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        <Clock className="h-3 w-3 shrink-0" />
                         {entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : "Unknown"}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
                       <Link
                         to="/app/approvals/$entryId"
                         params={{ entryId: entry.id }}
-                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-hover transition-colors whitespace-nowrap"
                       >
                         Review
-                        <ArrowRight className="ml-1 h-3 w-3" />
+                        <ArrowRight className="ml-1 h-3 w-3 shrink-0" />
                       </Link>
                     </td>
                   </tr>

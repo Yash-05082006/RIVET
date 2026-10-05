@@ -8,21 +8,21 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
   switch (status) {
     case "approved":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-          <CheckCircle2 className="h-3 w-3" /> Approved
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 whitespace-nowrap">
+          <CheckCircle2 className="h-3 w-3 shrink-0" /> Approved
         </span>
       );
     case "rejected":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
-          <XCircle className="h-3 w-3" /> Rejected
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10 whitespace-nowrap">
+          <XCircle className="h-3 w-3 shrink-0" /> Rejected
         </span>
       );
     case "submitted":
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-          <Clock className="h-3 w-3" /> Pending Review
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 whitespace-nowrap">
+          <Clock className="h-3 w-3 shrink-0" /> Pending Review
         </span>
       );
   }
@@ -69,37 +69,37 @@ export function ManagerDashboard() {
               )}
             </div>
             {reviewQueue.length > 0 ? (
-              <div className="overflow-hidden rounded-lg border border-border bg-background">
+              <div className="overflow-x-auto rounded-lg border border-border bg-background">
                 <table className="w-full text-sm">
                   <thead className="border-b border-border bg-surface text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     <tr>
-                      <th className="px-4 py-2.5 text-left">Employee</th>
+                      <th className="px-4 py-2.5 text-left whitespace-nowrap">Employee</th>
                       <th className="px-4 py-2.5 text-left">Module</th>
-                      <th className="px-4 py-2.5 text-left">Submitted</th>
-                      <th className="px-4 py-2.5 text-left">Action</th>
+                      <th className="px-4 py-2.5 text-left whitespace-nowrap">Submitted</th>
+                      <th className="px-4 py-2.5 text-left whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {reviewQueue.map((entry) => (
                       <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-foreground">
+                        <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
                           {userName(entry.authorId)}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {moduleName(entry.moduleKey)}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {entry.submittedAt
                             ? new Date(entry.submittedAt).toLocaleDateString()
                             : entry.entryDate}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <Link
                             to="/app/approvals/$entryId"
                             params={{ entryId: entry.id }}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors whitespace-nowrap"
                           >
-                            Review <ArrowRight className="h-3 w-3" />
+                            Review <ArrowRight className="h-3 w-3 shrink-0" />
                           </Link>
                         </td>
                       </tr>

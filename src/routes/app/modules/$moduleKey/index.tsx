@@ -22,7 +22,7 @@ const STATUS_CONFIG: Record<
 function StatusBadge({ status }: { status: LogEntry["status"] }) {
   const cfg = STATUS_CONFIG[status];
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${cfg.classes}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset whitespace-nowrap ${cfg.classes}`}>
       {cfg.label}
     </span>
   );
@@ -101,15 +101,29 @@ function ModuleDetailPage() {
         <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">
           {user.role === "employee" ? "My Entries" : "Entries"}
         </h2>
-        <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-border bg-background shadow-sm overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-surface text-muted-foreground text-xs uppercase font-medium border-b border-border">
               <tr>
-                {tableFieldDefs.map((f) => (
-                  <th key={f.key} className="px-4 py-3">{f.label}</th>
-                ))}
-                <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-right">Action</th>
+                {tableFieldDefs.map((f) => {
+                  const isShortOrDate =
+                    f.type === "date" ||
+                    f.type === "month" ||
+                    f.type === "time" ||
+                    f.type === "auto" ||
+                    f.key === "date" ||
+                    f.key === "dayOfWeek";
+                  return (
+                    <th
+                      key={f.key}
+                      className={`px-4 py-3 ${isShortOrDate ? "whitespace-nowrap" : ""}`}
+                    >
+                      {f.label}
+                    </th>
+                  );
+                })}
+                <th className="px-4 py-3 text-center whitespace-nowrap">Status</th>
+                <th className="px-4 py-3 text-right whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -122,20 +136,34 @@ function ModuleDetailPage() {
 
                   return (
                     <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
-                      {tableFieldDefs.map((f) => (
-                        <td key={f.key} className="px-4 py-3 text-muted-foreground">
-                          {String(entry.values[f.key] ?? "")}
-                        </td>
-                      ))}
-                      <td className="px-4 py-3 text-center">
+                      {tableFieldDefs.map((f) => {
+                        const isShortOrDate =
+                          f.type === "date" ||
+                          f.type === "month" ||
+                          f.type === "time" ||
+                          f.type === "auto" ||
+                          f.key === "date" ||
+                          f.key === "dayOfWeek";
+                        return (
+                          <td
+                            key={f.key}
+                            className={`px-4 py-3 text-muted-foreground ${
+                              isShortOrDate ? "whitespace-nowrap" : "min-w-[200px]"
+                            }`}
+                          >
+                            {String(entry.values[f.key] ?? "")}
+                          </td>
+                        );
+                      })}
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
                         <StatusBadge status={entry.status} />
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         {canEdit ? (
                           <Link
                             to="/app/modules/$moduleKey/entry/$entryId"
                             params={{ moduleKey, entryId: entry.id }}
-                            className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+                            className="text-sm font-medium text-primary hover:text-primary-hover transition-colors whitespace-nowrap"
                           >
                             {isRejected ? "Fix & Resubmit" : "Continue editing"}
                           </Link>
@@ -143,7 +171,7 @@ function ModuleDetailPage() {
                           <Link
                             to="/app/modules/$moduleKey/entry/$entryId"
                             params={{ moduleKey, entryId: entry.id }}
-                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
                           >
                             View
                           </Link>

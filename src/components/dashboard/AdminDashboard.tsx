@@ -21,7 +21,7 @@ export function AdminDashboard() {
     const cls = map[action] ?? "bg-slate-100 text-slate-700";
     return (
       <span
-        className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium capitalize ${cls}`}
+        className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap ${cls}`}
       >
         {action.replace("_", " ")}
       </span>
@@ -97,33 +97,33 @@ export function AdminDashboard() {
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Global Audit &amp; Activity Log
         </h2>
-        <div className="overflow-hidden rounded-lg border border-border bg-background">
+        <div className="overflow-x-auto rounded-lg border border-border bg-background">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-surface text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-4 py-2.5 text-left">Timestamp</th>
-                <th className="px-4 py-2.5 text-left">Actor</th>
-                <th className="px-4 py-2.5 text-left">Action</th>
+                <th className="px-4 py-2.5 text-left whitespace-nowrap">Timestamp</th>
+                <th className="px-4 py-2.5 text-left whitespace-nowrap">Actor</th>
+                <th className="px-4 py-2.5 text-left whitespace-nowrap">Action</th>
                 <th className="px-4 py-2.5 text-left">Entity</th>
-                <th className="px-4 py-2.5 text-left">Department</th>
+                <th className="px-4 py-2.5 text-left whitespace-nowrap">Department</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {recentAudit.length > 0 ? (
                 recentAudit.map((record) => (
                   <tr key={record.id} className="hover:bg-surface/50 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       {new Date(record.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 font-medium text-foreground">
+                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
                       {userName(record.actorId)}
                     </td>
-                    <td className="px-4 py-3">{actionBadge(record.action)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{actionBadge(record.action)}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {record.entity}{" "}
-                      <span className="text-xs opacity-60">({record.entityId})</span>
+                      <span className="text-xs opacity-60 whitespace-nowrap">({record.entityId})</span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       {record.departmentId ? departmentName(record.departmentId) : "-"}
                     </td>
                   </tr>

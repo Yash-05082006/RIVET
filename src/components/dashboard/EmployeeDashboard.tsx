@@ -8,27 +8,27 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
   switch (status) {
     case "approved":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-          <CheckCircle2 className="h-3 w-3" /> Approved
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 whitespace-nowrap">
+          <CheckCircle2 className="h-3 w-3 shrink-0" /> Approved
         </span>
       );
     case "rejected":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
-          <XCircle className="h-3 w-3" /> Rejected
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10 whitespace-nowrap">
+          <XCircle className="h-3 w-3 shrink-0" /> Rejected
         </span>
       );
     case "submitted":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-          <Clock className="h-3 w-3" /> Under Review
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 whitespace-nowrap">
+          <Clock className="h-3 w-3 shrink-0" /> Under Review
         </span>
       );
     case "draft":
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
-          <FileEdit className="h-3 w-3" /> Draft
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10 whitespace-nowrap">
+          <FileEdit className="h-3 w-3 shrink-0" /> Draft
         </span>
       );
   }
@@ -126,14 +126,14 @@ export function EmployeeDashboard() {
               Recent Work
             </h2>
             {recentWork.length > 0 ? (
-              <div className="overflow-hidden rounded-lg border border-border bg-background">
+              <div className="overflow-x-auto rounded-lg border border-border bg-background">
                 <table className="w-full text-sm">
                   <thead className="border-b border-border bg-surface text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     <tr>
                       <th className="px-4 py-2.5 text-left">Module</th>
-                      <th className="px-4 py-2.5 text-left">Entry Date</th>
-                      <th className="px-4 py-2.5 text-left">Status</th>
-                      <th className="px-4 py-2.5 text-left">Updated</th>
+                      <th className="px-4 py-2.5 text-left whitespace-nowrap">Entry Date</th>
+                      <th className="px-4 py-2.5 text-left whitespace-nowrap">Status</th>
+                      <th className="px-4 py-2.5 text-left whitespace-nowrap">Updated</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -142,11 +142,11 @@ export function EmployeeDashboard() {
                         <td className="px-4 py-3 font-medium text-foreground">
                           {moduleName(entry.moduleKey)}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{entry.entryDate}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{entry.entryDate}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <StatusBadge status={entry.status} />
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {new Date(entry.updatedAt).toLocaleDateString()}
                         </td>
                       </tr>

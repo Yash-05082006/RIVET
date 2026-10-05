@@ -22,8 +22,8 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
   const cfg = STATUS_CONFIG[status];
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${cfg.classes}`}>
-      <Icon className="h-3 w-3" /> {cfg.label}
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset whitespace-nowrap ${cfg.classes}`}>
+      <Icon className="h-3 w-3 shrink-0" /> {cfg.label}
     </span>
   );
 }
@@ -68,7 +68,7 @@ function WorkPage() {
                       <div>
                         <p className="text-sm font-medium text-foreground">{moduleName(entry.moduleKey)}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {departmentName(entry.departmentId)} · Entry date: {entry.entryDate}
+                          {departmentName(entry.departmentId)} · <span className="whitespace-nowrap">Entry date: {entry.entryDate}</span>
                         </p>
                       </div>
                       <StatusBadge status={entry.status} />
@@ -101,36 +101,36 @@ function WorkPage() {
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Work History</h2>
         {otherEntries.length > 0 ? (
-          <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
+          <div className="rounded-lg border border-border bg-background shadow-sm overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-surface text-muted-foreground text-xs uppercase font-medium border-b border-border">
                 <tr>
                   <th className="px-4 py-3">Module</th>
-                  <th className="px-4 py-3">Department</th>
-                  <th className="px-4 py-3">Entry Date</th>
-                  <th className="px-4 py-3">Last Updated</th>
-                  <th className="px-4 py-3 text-center">Status</th>
-                  <th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Department</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Entry Date</th>
+                  <th className="px-4 py-3 whitespace-nowrap">Last Updated</th>
+                  <th className="px-4 py-3 text-center whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3 text-right whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {otherEntries.map((entry) => (
                   <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">{moduleName(entry.moduleKey)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{departmentName(entry.departmentId)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{entry.entryDate}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{departmentName(entry.departmentId)}</td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{entry.entryDate}</td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       {new Date(entry.updatedAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
                       <StatusBadge status={entry.status} />
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
                       <Link
                         to="/app/modules/$moduleKey/entry/$entryId"
                         params={{ moduleKey: entry.moduleKey, entryId: entry.id }}
                         search={{ from: 'work' }}
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
                       >
                         View
                       </Link>
