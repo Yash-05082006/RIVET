@@ -23,6 +23,7 @@ import { Route as AppAdminAuditRouteImport } from './routes/app/admin/audit'
 import { Route as AppAdminDepartmentsRouteImport } from './routes/app/admin/departments'
 import { Route as AppAdminModulesRouteImport } from './routes/app/admin/modules'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
+import { Route as AppApprovalsIndexRouteImport } from './routes/app/approvals/index'
 import { Route as AppApprovalsEntryIdRouteImport } from './routes/app/approvals/$entryId'
 import { Route as AppCampaignsIndexRouteImport } from './routes/app/campaigns/index'
 import { Route as AppCampaignsCampaignIdRouteImport } from './routes/app/campaigns/$campaignId'
@@ -102,6 +103,11 @@ const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AppRoute,
 } as any)
+const AppApprovalsIndexRoute = AppApprovalsIndexRouteImport.update({
+  id: '/approvals/',
+  path: '/approvals/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppApprovalsEntryIdRoute = AppApprovalsEntryIdRouteImport.update({
   id: '/approvals/$entryId',
   path: '/approvals/$entryId',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
   '/app/campaigns/$campaignId': typeof AppCampaignsCampaignIdRoute
   '/app/campaigns/new': typeof AppCampaignsNewRoute
+  '/app/approvals/': typeof AppApprovalsIndexRoute
   '/app/campaigns/': typeof AppCampaignsIndexRoute
   '/app/modules/': typeof AppModulesIndexRoute
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
   '/app/campaigns/$campaignId': typeof AppCampaignsCampaignIdRoute
   '/app/campaigns/new': typeof AppCampaignsNewRoute
+  '/app/approvals': typeof AppApprovalsIndexRoute
   '/app/campaigns': typeof AppCampaignsIndexRoute
   '/app/modules': typeof AppModulesIndexRoute
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/app/approvals/$entryId': typeof AppApprovalsEntryIdRoute
   '/app/campaigns/$campaignId': typeof AppCampaignsCampaignIdRoute
   '/app/campaigns/new': typeof AppCampaignsNewRoute
+  '/app/approvals/': typeof AppApprovalsIndexRoute
   '/app/campaigns/': typeof AppCampaignsIndexRoute
   '/app/modules/': typeof AppModulesIndexRoute
   '/app/modules/$moduleKey/new': typeof AppModulesModuleKeyNewRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/app/approvals/$entryId'
     | '/app/campaigns/$campaignId'
     | '/app/campaigns/new'
+    | '/app/approvals/'
     | '/app/campaigns/'
     | '/app/modules/'
     | '/app/modules/$moduleKey/new'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/app/approvals/$entryId'
     | '/app/campaigns/$campaignId'
     | '/app/campaigns/new'
+    | '/app/approvals'
     | '/app/campaigns'
     | '/app/modules'
     | '/app/modules/$moduleKey/new'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/app/approvals/$entryId'
     | '/app/campaigns/$campaignId'
     | '/app/campaigns/new'
+    | '/app/approvals/'
     | '/app/campaigns/'
     | '/app/modules/'
     | '/app/modules/$moduleKey/new'
@@ -398,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/approvals/': {
+      id: '/app/approvals/'
+      path: '/approvals'
+      fullPath: '/app/approvals/'
+      preLoaderRoute: typeof AppApprovalsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/approvals/$entryId': {
       id: '/app/approvals/$entryId'
       path: '/approvals/$entryId'
@@ -471,6 +490,7 @@ interface AppRouteChildren {
   AppApprovalsEntryIdRoute: typeof AppApprovalsEntryIdRoute
   AppCampaignsCampaignIdRoute: typeof AppCampaignsCampaignIdRoute
   AppCampaignsNewRoute: typeof AppCampaignsNewRoute
+  AppApprovalsIndexRoute: typeof AppApprovalsIndexRoute
   AppCampaignsIndexRoute: typeof AppCampaignsIndexRoute
   AppModulesIndexRoute: typeof AppModulesIndexRoute
   AppModulesModuleKeyNewRoute: typeof AppModulesModuleKeyNewRoute
@@ -492,6 +512,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppApprovalsEntryIdRoute: AppApprovalsEntryIdRoute,
   AppCampaignsCampaignIdRoute: AppCampaignsCampaignIdRoute,
   AppCampaignsNewRoute: AppCampaignsNewRoute,
+  AppApprovalsIndexRoute: AppApprovalsIndexRoute,
   AppCampaignsIndexRoute: AppCampaignsIndexRoute,
   AppModulesIndexRoute: AppModulesIndexRoute,
   AppModulesModuleKeyNewRoute: AppModulesModuleKeyNewRoute,
