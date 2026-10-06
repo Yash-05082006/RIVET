@@ -23,8 +23,9 @@ export const Route = createFileRoute("/app/approvals/")({
 });
 
 type ViewMode = "list" | "board";
-type ApprovalStatus = "submitted" | "approved" | "rejected";
+type ApprovalStatus = LogEntry["status"];
 const statusLabels: Record<ApprovalStatus, string> = {
+  draft: "Draft",
   submitted: "Pending",
   approved: "Approved",
   rejected: "Rejected",
@@ -32,6 +33,7 @@ const statusLabels: Record<ApprovalStatus, string> = {
 
 function StatusLabel({ status }: { status: ApprovalStatus }) {
   const classes: Record<ApprovalStatus, string> = {
+    draft: "bg-surface text-muted-foreground ring-border",
     submitted: "bg-amber-50 text-amber-800 ring-amber-700/20",
     approved: "bg-green-50 text-green-800 ring-green-700/20",
     rejected: "bg-red-50 text-red-800 ring-red-700/20",
