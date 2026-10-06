@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { users } from "./demo-data";
-import { accessibleModules, canAccessPath, canModule } from "./permissions";
+import { accessibleModules, canAccessPath, canDecideEntry, canModule, canReviewEntry } from "./permissions";
+import { logEntries } from "./demo-data";
 
 const u = (id: string) => users.find((x) => x.id === id)!;
 
@@ -35,5 +36,31 @@ describe("role-gated areas", () => {
   it("admin reaches every module", () => {
     expect(canAccessPath(u("u-admin"), "/app/admin/audit")).toBe(true);
     expect(canModule(u("u-admin"), "view", "call-log")).toBe(true);
+  });
+});
+
+describe("approval permissions and transitions", () => {
+  const pendingResearch = logEntries.find((entry) => entry.id === "E-1044");
+  const pendingData = logEntries.find((entry) => entry.id === "E-1045");
+  const approvedData = logEntries.find((entry) => entry.id === "E-1046");
+  const sharedWebinar = {
+    ...logEntries.find((entry) => entry.moduleKey === "webinar-series-planner")!,
+  };
+
+  it("keeps managers inside their assigned departments", () => {
+    expect(pendingResearch && canReviewEntry(u("u-mgr-data"), pendingResearch)).toBe(false);
+    expect(pendingData && canReviewEntry(u("u-mgr-data"), pendingData)).toBe(true);
+    expect(pendingResearch && canReviewEntry(u("u-admin"), pendingResearch)).toBe(true);
+  });
+
+  it("does not treat shared webinar records as personal approval submissions", () => {
+    expect(canReviewEntry(u("u-mgr-data"), sharedWebinar)).toBe(false);
+  });
+
+  it("allows only pending decisions and requires a rejection remark", () => {
+    expect(pendingData && canDecideEntry(u("u-mgr-data"), pendingData, "approved")).toBe(true);
+    expect(pendingData && canDecideEntry(u("u-mgr-data"), pendingData, "rejected", "  ")).toBe(false);
+    expect(pendingData && canDecideEntry(u("u-mgr-data"), pendingData, "rejected", "Please correct counts")).toBe(true);
+    expect(approvedData && canDecideEntry(u("u-mgr-data"), approvedData, "approved")).toBe(false);
   });
 });

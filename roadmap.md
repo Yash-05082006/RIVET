@@ -1,0 +1,3 @@
+- [ ] Complete Phase 5 approval list, filters, bulk actions, and board view using the current approval architecture.
+- [ ] Verify role boundaries, approve/reject remarks, resubmission, manager edits/audit, and prior-phase compatibility.
+- [ ] Run TypeScript, build, and approval-focused browser/tests; report any remaining blocker.

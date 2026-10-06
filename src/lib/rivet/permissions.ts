@@ -62,7 +62,26 @@ export function canViewEntry(user: User | null, entry: LogEntry): boolean {
 }
 
 export function canReviewEntry(user: User | null, entry: LogEntry): boolean {
-  return canModule(user, "review", entry.moduleKey) && canAccessDepartment(user, entry.departmentId);
+  const mod = getModule(entry.moduleKey);
+  return !!mod?.approvalRequired && canModule(user, "review", entry.moduleKey) && canAccessDepartment(user, entry.departmentId);
+}
+
+/** Employees edit their own drafts/rejections; reviewers may correct pending entries. */
+export function canEditEntry(user: User | null, entry: LogEntry): boolean {
+  if (!user || !canModule(user, "edit", entry.moduleKey)) return false;
+  if (entry.authorId === user.id) return entry.status === "draft" || entry.status === "rejected";
+  return entry.status === "submitted" && canReviewEntry(user, entry);
+}
+
+/** Only pending entries can be decided, and rejection always needs a reason. */
+export function canDecideEntry(
+  user: User | null,
+  entry: LogEntry,
+  decision: "approved" | "rejected",
+  remarks?: string,
+): boolean {
+  if (!canReviewEntry(user, entry) || entry.status !== "submitted") return false;
+  return decision !== "rejected" || Boolean(remarks?.trim());
 }
 
 /**
