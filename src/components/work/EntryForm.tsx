@@ -10,7 +10,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, CalendarDays } from "lucide-react";
 import type { ModuleDef, LogEntry } from "../../lib/rivet/types";
-import { departmentName } from "../../lib/rivet/demo-data";
+import { departmentName, campaigns as allCampaigns } from "../../lib/rivet/demo-data";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { canCreateIn } from "../../lib/rivet/nav";
 
@@ -44,7 +44,7 @@ function fieldStr(values: Record<string, string | number | boolean>, key: string
 
 export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
   const user = useCurrentUser();
-  const { createEntry, updateEntryValues, submitEntry, myEntries } = useRivet();
+  const { createEntry, updateEntryValues, submitEntry, myEntries, campaigns, linkEntryToCampaign } = useRivet();
   const navigate = useNavigate();
 
   // Entry is editable iff it is owned by the current user AND in draft or rejected state.
@@ -76,6 +76,15 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>(
+    existingEntry?.campaignId ?? ""
+  );
+
+  // Show campaign selector for brand-marketing department modules
+  const isBrandMarketing = moduleDef.departmentId === "brand-marketing";
+  const availableCampaigns = isBrandMarketing
+    ? campaigns.filter((c) => c.departmentId === "brand-marketing")
+    : [];
 
   // The primary date key (used for duplicate guard and dayOfWeek calculation)
   const primaryDateKey = editableFields.find((f) => f.type === "date" || f.type === "month")?.key;
@@ -86,8 +95,19 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
     ? computeDayOfWeek(primaryDateKey ? (values[primaryDateKey] ?? "") : "")
     : null;
 
+  /** Parse a date string (YYYY-MM-DD) into a local Date without timezone shift. */
+  function parseLocalDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return null;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   function validate(forSubmit: boolean): boolean {
     const errs: Record<string, string> = {};
+
+    // Required field validation (on submit only)
     if (forSubmit) {
       editableFields.forEach((f) => {
         if (f.required && !values[f.key]?.trim()) {
@@ -95,6 +115,25 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
         }
       });
     }
+
+    // Module-specific validation: weekEnding must be a Friday
+    if (moduleDef.key === "weekly-meeting-report" && values["weekEnding"]) {
+      const d = parseLocalDate(values["weekEnding"]);
+      if (d && d.getDay() !== 5) {
+        errs["weekEnding"] = "Week ending date must be a Friday";
+      }
+    }
+
+    // Non-negative validation for integer and decimal fields (always)
+    editableFields.forEach((f) => {
+      if ((f.type === "integer" || f.type === "decimal") && values[f.key]) {
+        const num = Number(values[f.key]);
+        if (!isNaN(num) && num < 0) {
+          errs[f.key] = `${f.label} cannot be negative`;
+        }
+      }
+    });
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -142,10 +181,13 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
         setSaving(false);
         return;
       }
-      createEntry({ moduleKey: moduleDef.key, values: buildValues(), entryDate, submit: false });
+      createEntry({ moduleKey: moduleDef.key, values: buildValues(), entryDate, submit: false, campaignId: selectedCampaignId || undefined });
       navigate({ to: "/app/work" });
     } else {
       updateEntryValues(existingEntry.id, buildValues());
+      if (existingEntry.campaignId !== (selectedCampaignId || undefined)) {
+        linkEntryToCampaign(existingEntry.id, selectedCampaignId || undefined);
+      }
       navigate({ to: "/app/work" });
     }
     setSaving(false);
@@ -167,11 +209,14 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
         setSaving(false);
         return;
       }
-      createEntry({ moduleKey: moduleDef.key, values: buildValues(), entryDate, submit: true });
+      createEntry({ moduleKey: moduleDef.key, values: buildValues(), entryDate, submit: true, campaignId: selectedCampaignId || undefined });
       navigate({ to: "/app/work" });
     } else {
       // Update values then submit (covers both draft submit and resubmit after rejection)
       updateEntryValues(existingEntry.id, buildValues());
+      if (existingEntry.campaignId !== (selectedCampaignId || undefined)) {
+        linkEntryToCampaign(existingEntry.id, selectedCampaignId || undefined);
+      }
       submitEntry(existingEntry.id);
       navigate({ to: "/app/work" });
     }
@@ -238,6 +283,42 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
 
       {/* Dynamic form fields */}
       <div className="space-y-5">
+        {/* Optional campaign selector for Brand & Marketing */}
+        {isBrandMarketing && availableCampaigns.length > 0 && (
+          <div>
+            <label
+              htmlFor="field-campaign"
+              className="block text-sm font-medium text-foreground mb-1.5"
+            >
+              Link to Campaign
+              <span className="ml-2 text-xs text-muted-foreground">(optional)</span>
+            </label>
+            <select
+              id="field-campaign"
+              value={selectedCampaignId}
+              disabled={isViewOnly}
+              onChange={(e) => setSelectedCampaignId(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm text-foreground outline-none transition-colors disabled:bg-surface disabled:cursor-not-allowed bg-background border-border focus:border-primary focus:ring-2 focus:ring-primary-light"
+            >
+              <option value="">No campaign</option>
+              {availableCampaigns.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.status})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Existing campaign badge for view-only */}
+        {existingEntry?.campaignId && isViewOnly && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Campaign:</span>
+            <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
+              {availableCampaigns.find((c) => c.id === existingEntry.campaignId)?.name ?? existingEntry.campaignId}
+            </span>
+          </div>
+        )}
         {editableFields.map((field) => {
           const err = errors[field.key];
           const val = values[field.key] ?? "";

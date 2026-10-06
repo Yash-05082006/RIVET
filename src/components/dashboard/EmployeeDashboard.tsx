@@ -3,6 +3,7 @@ import { modules, moduleName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
 import { FileEdit, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
+import { formatDate } from "../../lib/formatDate";
 
 function StatusBadge({ status }: { status: LogEntry["status"] }) {
   switch (status) {
@@ -94,7 +95,7 @@ export function EmployeeDashboard() {
                           <StatusBadge status={entry.status} />
                         </div>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          Entry Date: {entry.entryDate}
+                          Entry Date: {formatDate(entry.entryDate)}
                         </p>
                         {entry.managerRemarks && (
                           <div className="mt-2 rounded border border-red-100 bg-red-50/50 px-3 py-2 text-xs text-red-800">
@@ -142,12 +143,12 @@ export function EmployeeDashboard() {
                         <td className="px-4 py-3 font-medium text-foreground">
                           {moduleName(entry.moduleKey)}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{entry.entryDate}</td>
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(entry.entryDate)}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <StatusBadge status={entry.status} />
                         </td>
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {new Date(entry.updatedAt).toLocaleDateString()}
+                          {formatDate(entry.updatedAt)}
                         </td>
                       </tr>
                     ))}

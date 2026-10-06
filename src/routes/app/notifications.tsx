@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
+import { formatDateTime } from "../../lib/formatDate";
 
 export const Route = createFileRoute("/app/notifications")({
   component: NotificationsPage,
@@ -34,22 +35,26 @@ function NotificationsPage() {
             {myNotifications.map((n) => (
               <li
                 key={n.id}
-                className={`flex items-start gap-4 px-5 py-4 transition-colors ${n.read ? "bg-background" : "bg-primary-light/40"}`}
+                className={`flex items-start gap-4 px-5 py-4 transition-colors ${n.read ? "bg-background" : "bg-slate-50/50"}`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
-                    <p className={`text-sm font-medium ${n.read ? "text-foreground" : "text-primary"}`}>
+                    <p className={`text-sm font-medium ${
+                      n.kind === "rejected" ? "text-red-600" :
+                      n.kind === "approved" ? "text-green-600" :
+                      "text-foreground"
+                    }`}>
                       {n.title}
                     </p>
                     {!n.read && (
-                      <span className="shrink-0 h-2 w-2 rounded-full bg-primary mt-1.5" />
+                      <span className="shrink-0 h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
                     )}
                   </div>
                   {n.body && (
                     <p className="mt-0.5 text-sm text-muted-foreground">{n.body}</p>
                   )}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(n.createdAt).toLocaleString()}
+                    {formatDateTime(n.createdAt)}
                   </p>
                 </div>
                 {!n.read && (

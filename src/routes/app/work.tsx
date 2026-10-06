@@ -3,6 +3,7 @@ import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { moduleName, departmentName } from "../../lib/rivet/demo-data";
 import { AlertCircle, FileEdit, CheckCircle2, XCircle, Clock, ArrowRight } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
+import { formatDate } from "../../lib/formatDate";
 
 export const Route = createFileRoute("/app/work")({
   component: WorkPage,
@@ -68,7 +69,7 @@ function WorkPage() {
                       <div>
                         <p className="text-sm font-medium text-foreground">{moduleName(entry.moduleKey)}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {departmentName(entry.departmentId)} · <span className="whitespace-nowrap">Entry date: {entry.entryDate}</span>
+                          {departmentName(entry.departmentId)} · <span className="whitespace-nowrap">Entry date: {formatDate(entry.entryDate)}</span>
                         </p>
                       </div>
                       <StatusBadge status={entry.status} />
@@ -118,9 +119,9 @@ function WorkPage() {
                   <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">{moduleName(entry.moduleKey)}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{departmentName(entry.departmentId)}</td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{entry.entryDate}</td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(entry.entryDate)}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {new Date(entry.updatedAt).toLocaleDateString()}
+                      {formatDate(entry.updatedAt)}
                     </td>
                     <td className="px-4 py-3 text-center whitespace-nowrap">
                       <StatusBadge status={entry.status} />

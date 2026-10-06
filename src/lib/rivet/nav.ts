@@ -8,6 +8,7 @@ import {
   accessibleDepartments,
   accessibleModules,
   canModule,
+  canAccessDepartment,
   hasPermission,
   type GlobalPermission,
 } from "./permissions";
@@ -54,9 +55,22 @@ export const navSections: NavSection[] = [
 ];
 
 export function sectionsForUser(user: User): NavSection[] {
-  return navSections
+  const filtered = navSections
     .map((s) => ({ ...s, items: s.items.filter((i) => !i.requires || hasPermission(user, i.requires)) }))
     .filter((s) => s.items.length > 0);
+
+  // Inject Campaigns link for users with brand-marketing department access
+  if (canAccessDepartment(user, "brand-marketing")) {
+    const workflowSection = filtered.find((s) => s.title === "Workflow");
+    const campaignsItem: NavItem = { label: "Campaigns", to: "/app/campaigns" };
+    if (workflowSection) {
+      workflowSection.items.push(campaignsItem);
+    } else {
+      filtered.splice(1, 0, { title: "Workflow", items: [campaignsItem] });
+    }
+  }
+
+  return filtered;
 }
 
 export const departmentsForUser = (user: User) => accessibleDepartments(user);

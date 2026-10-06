@@ -2,6 +2,7 @@ import { useRivet } from "../../lib/rivet/store";
 import { users, departments, modules, userName, departmentName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
+import { formatDateTime } from "../../lib/formatDate";
 
 export function AdminDashboard() {
   const { reviewQueue, audit } = useRivet();
@@ -113,7 +114,7 @@ export function AdminDashboard() {
                 recentAudit.map((record) => (
                   <tr key={record.id} className="hover:bg-surface/50 transition-colors">
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {new Date(record.createdAt).toLocaleString()}
+                      {formatDateTime(record.createdAt)}
                     </td>
                     <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
                       {userName(record.actorId)}

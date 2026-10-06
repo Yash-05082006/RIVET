@@ -3,6 +3,7 @@ import { Clock, ArrowRight } from "lucide-react";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
 import { moduleName, departmentName, users } from "../../../lib/rivet/demo-data";
 import { canReview } from "../../../lib/rivet/nav";
+import { formatDate, formatDateTime } from "../../../lib/formatDate";
 
 export const Route = createFileRoute("/app/approvals/")({
   component: ApprovalsPage,
@@ -56,11 +57,11 @@ function ApprovalsPage() {
                     <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{getAuthorName(entry.authorId)}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{departmentName(entry.departmentId)}</td>
                     <td className="px-4 py-3 text-muted-foreground">{moduleName(entry.moduleKey)}</td>
-                    <td className="px-4 py-3 text-foreground whitespace-nowrap">{entry.entryDate}</td>
+                    <td className="px-4 py-3 text-foreground whitespace-nowrap">{formatDate(entry.entryDate)}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       <div className="flex items-center gap-1.5 whitespace-nowrap">
                         <Clock className="h-3 w-3 shrink-0" />
-                        {entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : "Unknown"}
+                        {entry.submittedAt ? formatDateTime(entry.submittedAt) : "Unknown"}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">

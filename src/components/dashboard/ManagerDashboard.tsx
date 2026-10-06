@@ -3,6 +3,7 @@ import { moduleName, userName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
 import { CheckCircle2, XCircle, Clock, ArrowRight } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
+import { formatDate, formatDateTime } from "../../lib/formatDate";
 
 function StatusBadge({ status }: { status: LogEntry["status"] }) {
   switch (status) {
@@ -90,8 +91,8 @@ export function ManagerDashboard() {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {entry.submittedAt
-                            ? new Date(entry.submittedAt).toLocaleDateString()
-                            : entry.entryDate}
+                            ? formatDate(entry.submittedAt)
+                            : formatDate(entry.entryDate)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <Link
@@ -140,7 +141,7 @@ export function ManagerDashboard() {
                       </div>
                       <p className="text-xs text-muted-foreground">{moduleName(entry.moduleKey)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(entry.updatedAt).toLocaleDateString()}
+                        {formatDate(entry.updatedAt)}
                       </p>
                     </li>
                   ))

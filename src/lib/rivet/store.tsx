@@ -22,12 +22,14 @@ import {
   auditRecords as seedAudit,
   logEntries as seedEntries,
   notifications as seedNotifications,
+  campaigns as seedCampaigns,
   users,
   getModule,
 } from "./demo-data";
 import type {
   ActivityItem,
   AuditRecord,
+  Campaign,
   EntryStatus,
   LogEntry,
   Notification,
@@ -60,6 +62,7 @@ interface RivetContextValue {
   signIn: (userId: string) => void;
   signOut: () => void;
   entries: LogEntry[];
+  campaigns: Campaign[];
   notifications: Notification[];
   activity: ActivityItem[];
   audit: AuditRecord[];
@@ -75,12 +78,16 @@ interface RivetContextValue {
     values: Record<string, string | number | boolean>;
     entryDate: string;
     submit: boolean;
+    campaignId?: string;
   }) => string;
   updateEntryValues: (id: string, values: Record<string, string | number | boolean>) => void;
+  linkEntryToCampaign: (entryId: string, campaignId: string | undefined) => void;
   decide: (ids: string[], decision: "approved" | "rejected", remarks?: string) => void;
   addComment: (entryId: string, body: string) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
+  createCampaign: (input: Omit<Campaign, "id">) => string;
+  updateCampaign: (id: string, updates: Partial<Omit<Campaign, "id">>) => void;
 }
 
 const RivetContext = createContext<RivetContextValue | null>(null);
@@ -95,6 +102,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [entries, setEntries] = useState<LogEntry[]>(seedEntries);
+  const [campaignList, setCampaignList] = useState<Campaign[]>(seedCampaigns);
   const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
   const [activity, setActivity] = useState<ActivityItem[]>(seedActivity);
   const [audit, setAudit] = useState<AuditRecord[]>(seedAudit);
@@ -124,7 +132,16 @@ export function RivetProvider({ children }: { children: ReactNode }) {
         (e) => user.departmentIds.includes(e.departmentId) && e.status !== "draft",
       );
     }
-    return entries.filter((e) => e.authorId === user.id);
+    // Employees: own entries + all non-draft entries from department-scoped modules they belong to
+    return entries.filter((e) => {
+      if (e.authorId === user.id) return true;
+      // Department-scoped modules: employees can see all non-draft entries in their department
+      const mod = getModule(e.moduleKey);
+      if (mod?.scope === "department" && user.departmentIds.includes(e.departmentId) && e.status !== "draft") {
+        return true;
+      }
+      return false;
+    });
   }, [entries, user]);
 
   const myEntries = useMemo(
@@ -199,7 +216,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   );
 
   const createEntry = useCallback<RivetContextValue["createEntry"]>(
-    ({ moduleKey, values, entryDate, submit }) => {
+    ({ moduleKey, values, entryDate, submit, campaignId }) => {
       if (!user) return "";
       const mod = getModule(moduleKey);
       const now = new Date().toISOString();
@@ -212,6 +229,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
         entryDate,
         status: submit ? "submitted" : "draft",
         values,
+        campaignId: campaignId || undefined,
         createdAt: now,
         updatedAt: now,
         submittedAt: submit ? now : undefined,
@@ -235,6 +253,17 @@ export function RivetProvider({ children }: { children: ReactNode }) {
       return id;
     },
     [entries.length, logActivity, logAudit, user],
+  );
+
+  const linkEntryToCampaign = useCallback<RivetContextValue["linkEntryToCampaign"]>(
+    (entryId, campaignId) => {
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === entryId ? { ...e, campaignId: campaignId || undefined, updatedAt: new Date().toISOString() } : e,
+        ),
+      );
+    },
+    [],
   );
 
   const updateEntryValues = useCallback<RivetContextValue["updateEntryValues"]>(
@@ -353,12 +382,33 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     );
   }, [user]);
 
+  const createCampaign = useCallback<RivetContextValue["createCampaign"]>(
+    (input) => {
+      const id = nextId("c");
+      setCampaignList((prev) => [{ ...input, id }, ...prev]);
+      logAudit({ actorId: user?.id ?? "", action: "created", entity: "Campaign", entityId: id, departmentId: input.departmentId });
+      return id;
+    },
+    [logAudit, user],
+  );
+
+  const updateCampaign = useCallback<RivetContextValue["updateCampaign"]>(
+    (id, updates) => {
+      setCampaignList((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+      );
+      logAudit({ actorId: user?.id ?? "", action: "edited", entity: "Campaign", entityId: id });
+    },
+    [logAudit, user],
+  );
+
   const value: RivetContextValue = {
     ready,
     user,
     signIn,
     signOut,
     entries,
+    campaigns: campaignList,
     notifications,
     activity,
     audit,
@@ -370,10 +420,13 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     submitEntry,
     createEntry,
     updateEntryValues,
+    linkEntryToCampaign,
     decide,
     addComment,
     markRead,
     markAllRead,
+    createCampaign,
+    updateCampaign,
   };
 
   return <RivetContext.Provider value={value}>{children}</RivetContext.Provider>;

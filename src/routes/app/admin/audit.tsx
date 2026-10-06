@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { users } from "../../../lib/rivet/demo-data";
 import { useRivet } from "../../../lib/rivet/store";
+import { formatDateTime } from "../../../lib/formatDate";
 
 export const Route = createFileRoute("/app/admin/audit")({
   component: AuditAdminPage,
@@ -38,7 +39,7 @@ function AuditAdminPage() {
               audit.map((record) => (
                 <tr key={record.id} className="hover:bg-surface/50 transition-colors">
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                    {new Date(record.createdAt).toLocaleString()}
+                    {formatDateTime(record.createdAt)}
                   </td>
                   <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{actorName(record.actorId)}</td>
                   <td className="px-4 py-3 whitespace-nowrap">

@@ -2,7 +2,7 @@ import { Link, Outlet, createFileRoute, useNavigate, useLocation, redirect, Navi
 import { 
   Menu, Bell, LogOut, ArrowLeft,
   Home, Briefcase, LayoutGrid, CheckSquare, BarChart, 
-  Users, Building, Shield, List, Settings, ChevronLeft, ChevronRight 
+  Users, Building, Shield, List, Settings, ChevronLeft, ChevronRight, Megaphone 
 } from "lucide-react";
 import { useState } from "react";
 import { useRivet } from "../lib/rivet/store";
@@ -35,6 +35,7 @@ function getNavIcon(label: string) {
     case "Modules & access": return <Shield className="h-5 w-5" />;
     case "Audit log": return <List className="h-5 w-5" />;
     case "Settings": return <Settings className="h-5 w-5" />;
+    case "Campaigns": return <Megaphone className="h-5 w-5" />;
     default: return <div className="h-5 w-5 rounded bg-muted/50" />;
   }
 }

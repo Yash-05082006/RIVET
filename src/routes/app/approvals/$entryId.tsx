@@ -4,6 +4,7 @@ import { ArrowLeft, Check, X, AlertCircle } from "lucide-react";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
 import { getModule, departmentName, users } from "../../../lib/rivet/demo-data";
 import { canReviewEntry } from "../../../lib/rivet/permissions";
+import { formatDateTime } from "../../../lib/formatDate";
 
 export const Route = createFileRoute("/app/approvals/$entryId")({
   component: EntryReviewPage,
@@ -103,7 +104,7 @@ function EntryReviewPage() {
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Review Submission</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Submitted on {entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : "Unknown"}
+              Submitted on {entry.submittedAt ? formatDateTime(entry.submittedAt) : "Unknown"}
             </p>
           </div>
           <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20">

@@ -74,6 +74,7 @@ export function canAccessPath(user: User | null, pathname: string): boolean {
   const path = pathname.replace(/\/+$/, "");
   if (path.startsWith("/app/admin")) return hasPermission(user, "admin");
   if (path.startsWith("/app/approvals")) return hasPermission(user, "review");
+  if (path.startsWith("/app/campaigns")) return canAccessDepartment(user, "brand-marketing");
   const mod = path.match(/^\/app\/modules\/([^/]+)(\/new)?/);
   if (mod) {
     if (!getModule(mod[1])) return true; // page renders its own "not found"
