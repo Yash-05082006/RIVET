@@ -18,6 +18,11 @@ import {
 } from "react";
 
 import {
+  canDecideEntry,
+  canEditEntry,
+  canReviewEntry,
+} from "./permissions";
+import {
   activity as seedActivity,
   auditRecords as seedAudit,
   logEntries as seedEntries,
@@ -70,6 +75,7 @@ interface RivetContextValue {
   visibleEntries: LogEntry[];
   myEntries: LogEntry[];
   reviewQueue: LogEntry[];
+  approvalEntries: LogEntry[];
   myNotifications: Notification[];
   unreadCount: number;
   submitEntry: (id: string) => void;
@@ -159,6 +165,14 @@ export function RivetProvider({ children }: { children: ReactNode }) {
       .filter((e) => e.status === "submitted")
       .sort((a, b) => (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
   }, [entries, user]);
+
+  const approvalEntries = useMemo(
+    () =>
+      entries
+        .filter((entry) => entry.status !== "draft" && canReviewEntry(user, entry))
+        .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? "")),
+    [entries, user],
+  );
 
   const myNotifications = useMemo(
     () =>
@@ -269,6 +283,8 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   const updateEntryValues = useCallback<RivetContextValue["updateEntryValues"]>(
     (id, values) => {
       if (!user) return;
+      const entry = entries.find((item) => item.id === id);
+      if (!entry || !canEditEntry(user, entry)) return;
       const now = new Date().toISOString();
       setEntries((prev) =>
         prev.map((e) =>
@@ -282,18 +298,32 @@ export function RivetProvider({ children }: { children: ReactNode }) {
             : e,
         ),
       );
-      logAudit({ actorId: user.id, action: "edited", entity: "Log Entry", entityId: id });
+      const diff = Object.entries(values)
+        .filter(([field, value]) => entry.values[field] !== value)
+        .map(([field, value]) => ({
+          field,
+          from: String(entry.values[field] ?? ""),
+          to: String(value),
+        }));
+      if (diff.length > 0) {
+        logAudit({ actorId: user.id, action: "edited", entity: "Log Entry", entityId: id, departmentId: entry.departmentId, diff });
+      }
     },
-    [logAudit, user],
+    [entries, logAudit, user],
   );
 
   const decide = useCallback<RivetContextValue["decide"]>(
     (ids, decision, remarks) => {
       if (!user) return;
+      const eligibleEntries = ids
+        .map((id) => entries.find((entry) => entry.id === id))
+        .filter((entry): entry is LogEntry => !!entry && canDecideEntry(user, entry, decision, remarks));
+      if (eligibleEntries.length === 0) return;
+      const eligibleIds = eligibleEntries.map((entry) => entry.id);
       const now = new Date().toISOString();
       setEntries((prev) =>
         prev.map((e) =>
-          ids.includes(e.id)
+          eligibleIds.includes(e.id)
             ? {
                 ...e,
                 status: decision,
@@ -305,9 +335,8 @@ export function RivetProvider({ children }: { children: ReactNode }) {
             : e,
         ),
       );
-      ids.forEach((id) => {
-        const entry = entries.find((e) => e.id === id);
-        if (!entry) return;
+      eligibleEntries.forEach((entry) => {
+        const id = entry.id;
         logActivity({
           action: decision === "approved" ? "approved" : "rejected",
           actorId: user.id,
@@ -415,6 +444,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     visibleEntries,
     myEntries,
     reviewQueue,
+    approvalEntries,
     myNotifications,
     unreadCount,
     submitEntry,
