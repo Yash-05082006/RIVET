@@ -23,7 +23,7 @@ function EntryDetailPage() {
 
   const entry = entries.find((e) => e.id === entryId);
 
-  const backLink = from === "work" ? "/app/work" : `/app/modules/${moduleKey}`;
+  const backLink = from === "work" ? "/app/work" : from === "approvals" ? `/app/approvals/${entryId}` : `/app/modules/${moduleKey}`;
 
   if (!mod || !entry) {
     return (

@@ -61,13 +61,12 @@ export function sectionsForUser(user: User): NavSection[] {
 
   // Inject Campaigns link for users with brand-marketing department access
   if (canAccessDepartment(user, "brand-marketing")) {
-    const workflowSection = filtered.find((s) => s.title === "Workflow");
     const campaignsItem: NavItem = { label: "Campaigns", to: "/app/campaigns" };
-    if (workflowSection) {
-      workflowSection.items.push(campaignsItem);
-    } else {
-      filtered.splice(1, 0, { title: "Workflow", items: [campaignsItem] });
-    }
+    return filtered.map((s) =>
+      s.title === "Workflow"
+        ? { ...s, items: [...s.items, campaignsItem] }
+        : s
+    );
   }
 
   return filtered;

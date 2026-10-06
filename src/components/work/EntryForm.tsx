@@ -13,6 +13,7 @@ import type { ModuleDef, LogEntry } from "../../lib/rivet/types";
 import { departmentName, campaigns as allCampaigns } from "../../lib/rivet/demo-data";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { canCreateIn } from "../../lib/rivet/nav";
+import { canReviewEntry } from "../../lib/rivet/permissions";
 
 interface EntryFormProps {
   moduleDef: ModuleDef;
@@ -47,11 +48,14 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
   const { createEntry, updateEntryValues, submitEntry, myEntries, campaigns, linkEntryToCampaign } = useRivet();
   const navigate = useNavigate();
 
+  const isManagerReviewing = !!existingEntry && existingEntry.status === "submitted" && canReviewEntry(user, existingEntry);
+
   // Entry is editable iff it is owned by the current user AND in draft or rejected state.
   const isEditable =
     !existingEntry ||
     (existingEntry.status === "draft" && existingEntry.authorId === user.id) ||
-    (existingEntry.status === "rejected" && existingEntry.authorId === user.id);
+    (existingEntry.status === "rejected" && existingEntry.authorId === user.id) ||
+    isManagerReviewing;
 
   // Only include user-fillable fields: exclude auto fields (dayOfWeek) and system fields (managerRemarks)
   const editableFields = useMemo(
@@ -163,6 +167,19 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
         e.authorId === user.id &&
         e.status !== "rejected"
     );
+  }
+
+  async function handleSaveChangesOnly() {
+    if (!validate(true) || !existingEntry) return;
+    setSaving(true);
+    setSubmitError("");
+
+    updateEntryValues(existingEntry.id, buildValues());
+    if (existingEntry.campaignId !== (selectedCampaignId || undefined)) {
+      linkEntryToCampaign(existingEntry.id, selectedCampaignId || undefined);
+    }
+    navigate({ to: "/app/approvals/$entryId", params: { entryId: existingEntry.id } });
+    setSaving(false);
   }
 
   async function handleSaveDraft() {
@@ -457,22 +474,35 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
       {/* Actions */}
       {!isViewOnly && (
         <div className="flex items-center justify-end gap-3 border-t border-border pt-5">
-          <button
-            type="button"
-            disabled={saving}
-            onClick={handleSaveDraft}
-            className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface disabled:opacity-50"
-          >
-            Save Draft
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={handleSubmit}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-50"
-          >
-            {existingEntry?.status === "rejected" ? "Resubmit for Review" : "Submit for Review"}
-          </button>
+          {isManagerReviewing ? (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={handleSaveChangesOnly}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-50"
+            >
+              Save Changes
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={handleSaveDraft}
+                className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface disabled:opacity-50"
+              >
+                Save Draft
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={handleSubmit}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-50"
+              >
+                {existingEntry?.status === "rejected" ? "Resubmit for Review" : "Submit for Review"}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

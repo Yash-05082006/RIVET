@@ -1,10 +1,10 @@
-import { Link, Outlet, createFileRoute, useNavigate, useLocation, redirect, Navigate } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useLocation, redirect, Navigate } from "@tanstack/react-router";
 import { 
   Menu, Bell, LogOut, ArrowLeft,
   Home, Briefcase, LayoutGrid, CheckSquare, BarChart, 
   Users, Building, Shield, List, Settings, ChevronLeft, ChevronRight, Megaphone 
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRivet } from "../lib/rivet/store";
 import { sectionsForUser, roleLabel } from "../lib/rivet/nav";
 import { canAccessPath } from "../lib/rivet/permissions";
@@ -42,11 +42,20 @@ function getNavIcon(label: string) {
 
 function AppLayout() {
   const { user, ready, signOut, unreadCount, reviewQueue } = useRivet();
-  const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  // Stabilise these so they don't recompute (or mutate) on every keystroke/state update
+  const navSections = useMemo(
+    () => (user ? sectionsForUser(user) : []),
+    [user]
+  );
+  const allowed = useMemo(
+    () => canAccessPath(user, location.pathname),
+    [user, location.pathname]
+  );
 
   if (!ready) return null;
 
@@ -54,12 +63,13 @@ function AppLayout() {
     return <Navigate to="/sign-in" replace />;
   }
 
-  const navSections = sectionsForUser(user)
-  const allowed = canAccessPath(user, location.pathname);
 
+  // Sign out: just clear the session. The `if (!user)` guard below renders
+  // <Navigate to="/sign-in" replace /> which handles the redirect cleanly
+  // without racing against a simultaneous navigate() call.
   const handleSignOut = () => {
+    setShowSignOutDialog(false);
     signOut();
-    navigate({ to: "/sign-in" });
   };
 
   const sidebarWidth = collapsed ? "w-20" : "w-64";

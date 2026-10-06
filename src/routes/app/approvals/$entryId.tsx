@@ -185,6 +185,14 @@ function EntryReviewPage() {
           </div>
         ) : (
           <div className="flex items-center justify-end gap-4">
+            <Link
+              to="/app/modules/$moduleKey/entry/$entryId"
+              params={{ moduleKey: entry.moduleKey, entryId: entry.id }}
+              search={{ from: "approvals" }}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface mr-auto"
+            >
+              Edit Submission
+            </Link>
             <button
               type="button"
               onClick={handleReject}
