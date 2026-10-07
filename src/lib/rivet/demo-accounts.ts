@@ -26,3 +26,10 @@ export function authenticate(email: string, password: string): string | null {
   const e = email.toLowerCase().trim();
   return demoAccounts.find((a) => a.email === e && a.password === password)?.userId ?? null;
 }
+
+export const VALID_DEMO_EMAILS = demoAccounts.map((a) => a.email);
+
+export function isValidDemoEmail(email: string): boolean {
+  const e = email.toLowerCase().trim();
+  return demoAccounts.some((a) => a.email === e);
+}

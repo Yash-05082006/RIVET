@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-ro
 import { useState } from "react";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
 import { departments } from "../lib/rivet/demo-data";
+import { isValidDemoEmail } from "../lib/rivet/demo-accounts";
 import { CheckCircle2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/sign-up")({
@@ -22,15 +23,13 @@ function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
-  const VALID_EMAILS = ["employee@rivet.com", "manager@rivet.com", "admin@rivet.com"];
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = "Full Name is required.";
     if (!formData.email.trim()) newErrors.email = "Work Email is required.";
-    else if (!VALID_EMAILS.includes(formData.email.toLowerCase().trim())) {
-      newErrors.email = "For this development phase, use employee@rivet.com, manager@rivet.com, or admin@rivet.com";
+    else if (!isValidDemoEmail(formData.email)) {
+      newErrors.email = "For this development phase, use an authorized demo account email (e.g. employee@rivet.com, manager@rivet.com, admin@rivet.com).";
     }
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
     if (!formData.password) newErrors.password = "Password is required.";

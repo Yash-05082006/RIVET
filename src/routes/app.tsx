@@ -1,10 +1,10 @@
-import { Link, Outlet, createFileRoute, useLocation, redirect, Navigate } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useNavigate, useLocation, redirect } from "@tanstack/react-router";
 import { 
   Menu, Bell, LogOut, ArrowLeft,
   Home, Briefcase, LayoutGrid, CheckSquare, BarChart, 
   Users, Building, Shield, List, Settings, ChevronLeft, ChevronRight, Megaphone 
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRivet } from "../lib/rivet/store";
 import { sectionsForUser, roleLabel } from "../lib/rivet/nav";
 import { canAccessPath } from "../lib/rivet/permissions";
@@ -42,6 +42,7 @@ function getNavIcon(label: string) {
 
 function AppLayout() {
   const { user, ready, signOut, unreadCount, reviewQueue } = useRivet();
+  const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
@@ -57,19 +58,18 @@ function AppLayout() {
     [user, location.pathname]
   );
 
-  if (!ready) return null;
+  useEffect(() => {
+    if (ready && !user) {
+      navigate({ to: "/sign-in", replace: true });
+    }
+  }, [ready, user, navigate]);
 
-  if (!user) {
-    return <Navigate to="/sign-in" replace />;
-  }
+  if (!ready || !user) return null;
 
-
-  // Sign out: just clear the session. The `if (!user)` guard below renders
-  // <Navigate to="/sign-in" replace /> which handles the redirect cleanly
-  // without racing against a simultaneous navigate() call.
   const handleSignOut = () => {
     setShowSignOutDialog(false);
     signOut();
+    navigate({ to: "/sign-in", replace: true });
   };
 
   const sidebarWidth = collapsed ? "w-20" : "w-64";
@@ -258,18 +258,28 @@ function AppLayout() {
       )}
 
       {showSignOutDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          onClick={() => setShowSignOutDialog(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-semibold text-foreground">Sign out</h3>
             <p className="mt-2 text-sm text-muted-foreground">Are you sure you want to sign out?</p>
             <div className="mt-6 flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setShowSignOutDialog(false)}
                 className="rounded-md px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSignOut}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
