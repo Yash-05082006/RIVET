@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { CheckCircle2, XCircle, Clock, ArrowRight } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
 import { formatDate, formatDateTime } from "../../lib/formatDate";
+import { ActivityFeed } from "./ActivityFeed";
 
 function StatusBadge({ status }: { status: LogEntry["status"] }) {
   switch (status) {
@@ -31,7 +32,7 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
 
 export function ManagerDashboard() {
   const user = useCurrentUser();
-  const { reviewQueue, entries } = useRivet();
+  const { reviewQueue, entries, activity } = useRivet();
 
   const teamRecentDecisions = entries
     .filter(
@@ -41,6 +42,10 @@ export function ManagerDashboard() {
     )
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, 8);
+
+  const teamActivity = activity
+    .filter((a) => user.departmentIds.includes(a.departmentId))
+    .slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -54,7 +59,10 @@ export function ManagerDashboard() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left / main column - review queue */}
-        <div className="space-y-0 lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
+          
+          <ActivityFeed activities={teamActivity} title="Team Activity" />
+
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

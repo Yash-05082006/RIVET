@@ -114,10 +114,15 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
     // Required field validation (on submit only)
     if (forSubmit) {
       editableFields.forEach((f) => {
-        if (f.required && !values[f.key]?.trim()) {
+        if (f.required && f.type !== "boolean" && !values[f.key]?.trim()) {
           errs[f.key] = `${f.label} is required`;
         }
       });
+    }
+
+    // Call Log: Outcome / Result is required for both saving and submitting
+    if (moduleDef.key === "call-log" && !values["outcome"]?.trim()) {
+      errs["outcome"] = "Outcome / Result is required";
     }
 
     // Module-specific validation: weekEnding must be a Friday

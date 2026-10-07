@@ -159,7 +159,7 @@ function ApprovalsPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-surface text-xs font-medium uppercase text-muted-foreground"><tr>
               <th className="w-10 px-4 py-3"><input type="checkbox" aria-label="Select all pending submissions" checked={pendingSelected.length > 0 && pendingSelected.length === filtered.filter((entry) => entry.status === "submitted").length} onChange={(event) => setSelectedIds(event.target.checked ? [...new Set([...selectedIds, ...filtered.filter((entry) => entry.status === "submitted").map((entry) => entry.id)])] : selectedIds.filter((id) => !filtered.some((entry) => entry.id === id)))} /></th>
-              <th className="px-4 py-3">Employee</th><th className="px-4 py-3">Department</th><th className="px-4 py-3">Module</th><th className="px-4 py-3">Entry date</th><th className="px-4 py-3">Submitted at</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Review / action</th>
+              <th className="whitespace-nowrap px-4 py-3">Employee</th><th className="whitespace-nowrap px-4 py-3">Department</th><th className="whitespace-nowrap px-4 py-3">Module</th><th className="whitespace-nowrap px-4 py-3">Entry date</th><th className="whitespace-nowrap px-4 py-3">Submitted at</th><th className="whitespace-nowrap px-4 py-3">Status</th><th className="whitespace-nowrap px-4 py-3 text-right">Review / action</th>
             </tr></thead>
             <tbody className="divide-y divide-border">
               {filtered.length ? filtered.map((entry) => <tr key={entry.id} className="hover:bg-surface/50">

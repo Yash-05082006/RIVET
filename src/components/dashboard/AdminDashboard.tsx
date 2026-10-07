@@ -3,15 +3,17 @@ import { users, departments, modules, userName, departmentName } from "../../lib
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { formatDateTime } from "../../lib/formatDate";
+import { ActivityFeed } from "./ActivityFeed";
 
 export function AdminDashboard() {
-  const { reviewQueue, audit } = useRivet();
+  const { reviewQueue, audit, activity } = useRivet();
 
   const activeUsers = users.filter((u) => u.active).length;
   const activeModules = modules.filter((m) => m.active).length;
   const pendingApprovals = reviewQueue.length;
 
   const recentAudit = audit.slice(0, 10);
+  const systemActivity = activity.slice(0, 10);
 
   const actionBadge = (action: string) => {
     const map: Record<string, string> = {
@@ -92,6 +94,9 @@ export function AdminDashboard() {
           Full Audit Log <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
+
+      {/* Activity Feed */}
+      <ActivityFeed activities={systemActivity} title="System Activity" />
 
       {/* Audit log table */}
       <section>

@@ -272,7 +272,7 @@ export const modules: ModuleDef[] = [
       { key: "callTime", label: "Call time", type: "time", required: true },
       { key: "duration", label: "Duration (minutes)", type: "integer", required: true },
       { key: "purpose", label: "Purpose of call", type: "text", required: true },
-      { key: "outcome", label: "Outcome / result", type: "text", required: true },
+      { key: "outcome", label: "Outcome / Result", type: "text", required: true },
       { key: "followUp", label: "Follow-up required", type: "boolean", required: true },
       { key: "notes", label: "Notes", type: "longtext", required: false },
     ],

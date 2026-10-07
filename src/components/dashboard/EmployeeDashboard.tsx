@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { FileEdit, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
 import { formatDate } from "../../lib/formatDate";
+import { ActivityFeed } from "./ActivityFeed";
 
 function StatusBadge({ status }: { status: LogEntry["status"] }) {
   switch (status) {
@@ -37,7 +38,7 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
 
 export function EmployeeDashboard() {
   const user = useCurrentUser();
-  const { myEntries } = useRivet();
+  const { myEntries, activity } = useRivet();
 
   const attentionRequired = myEntries.filter(
     (e) => e.status === "rejected" || e.status === "draft"
@@ -50,6 +51,16 @@ export function EmployeeDashboard() {
   const accessibleModules = modules.filter(
     (m) => user.departmentIds.includes(m.departmentId) && m.createRoles.includes(user.role)
   );
+
+  // Relevant activity: anything where actor is the user, or it's about the user's entry
+  const userActivity = activity.filter((a) => {
+    if (a.actorId === user.id) return true;
+    if (a.entryId) {
+      const entry = myEntries.find((e) => e.id === a.entryId);
+      if (entry) return true;
+    }
+    return false;
+  }).slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -66,6 +77,8 @@ export function EmployeeDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left column - 2/3 width */}
         <div className="space-y-6 lg:col-span-2">
+          
+          <ActivityFeed activities={userActivity} title="Your Recent Activity" />
 
           {/* Attention Required */}
           {attentionRequired.length > 0 && (
