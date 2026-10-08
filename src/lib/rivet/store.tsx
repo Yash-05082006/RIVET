@@ -38,6 +38,7 @@ import type {
   EntryStatus,
   LogEntry,
   Notification,
+  NotificationKind,
   Role,
   User,
 } from "./types";
@@ -119,6 +120,51 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const user = useMemo(() => users.find((u) => u.id === userId) ?? null, [userId]);
+
+  // System reminders
+  useEffect(() => {
+    if (!user) return;
+    const now = new Date().toISOString();
+
+    if (user.role === "employee") {
+      setNotifications((prev) => {
+        const hasReminder = prev.some((n) => n.recipientId === user.id && n.kind === "reminder" && n.title === "Missing Daily Submission");
+        if (!hasReminder) {
+          return [{
+            id: nextId("n"),
+            kind: "reminder",
+            recipientId: user.id,
+            title: "Missing Daily Submission",
+            body: "You haven't submitted your Daily Activity for today.",
+            createdAt: now,
+            read: false,
+          }, ...prev];
+        }
+        return prev;
+      });
+    }
+
+    if (user.role === "manager") {
+      const pendingCount = entries.filter((e) => e.status === "submitted" && user.departmentIds.includes(e.departmentId)).length;
+      if (pendingCount > 1) {
+        setNotifications((prev) => {
+          const hasReminder = prev.some((n) => n.recipientId === user.id && n.kind === "reminder" && n.title === "Multiple pending entries");
+          if (!hasReminder) {
+            return [{
+              id: nextId("n"),
+              kind: "reminder",
+              recipientId: user.id,
+              title: "Multiple pending entries",
+              body: `You have ${pendingCount} entries awaiting your review.`,
+              createdAt: now,
+              read: false,
+            }, ...prev];
+          }
+          return prev;
+        });
+      }
+    }
+  }, [user, entries]);
 
   const signIn = useCallback((id: string) => {
     window.localStorage.setItem(SESSION_KEY, id);
@@ -224,6 +270,23 @@ export function RivetProvider({ children }: { children: ReactNode }) {
           entityId: id,
           departmentId: entry.departmentId,
         });
+        const managers = users.filter((u) => u.role === "manager" && u.departmentIds.includes(entry.departmentId));
+        if (managers.length > 0) {
+          const modName = getModule(entry.moduleKey)?.name ?? "Entry";
+          setNotifications((prev) => [
+            ...managers.map((m) => ({
+              id: nextId("n"),
+              kind: "submission" as NotificationKind,
+              recipientId: m.id,
+              title: `New Submission: ${modName}`,
+              body: `${user.name} submitted an entry for ${entry.entryDate}.`,
+              createdAt: now,
+              read: false,
+              entryId: id,
+            })),
+            ...prev,
+          ]);
+        }
       }
     },
     [entries, logActivity, logAudit, user],
@@ -264,6 +327,24 @@ export function RivetProvider({ children }: { children: ReactNode }) {
         entityId: id,
         departmentId: entry.departmentId,
       });
+      if (submit) {
+        const managers = users.filter((u) => u.role === "manager" && u.departmentIds.includes(entry.departmentId));
+        if (managers.length > 0) {
+          setNotifications((prev) => [
+            ...managers.map((m) => ({
+              id: nextId("n"),
+              kind: "submission" as NotificationKind,
+              recipientId: m.id,
+              title: `New Submission: ${mod?.name ?? "Entry"}`,
+              body: `${user.name} submitted an entry for ${entryDate}.`,
+              createdAt: now,
+              read: false,
+              entryId: id,
+            })),
+            ...prev,
+          ]);
+        }
+      }
       return id;
     },
     [entries.length, logActivity, logAudit, user],
@@ -396,6 +477,32 @@ export function RivetProvider({ children }: { children: ReactNode }) {
           moduleKey: entry.moduleKey,
           departmentId: entry.departmentId,
         });
+
+        const modName = getModule(entry.moduleKey)?.name ?? "Entry";
+        const isAuthor = entry.authorId === user.id;
+        
+        let recipients: string[] = [];
+        if (isAuthor) {
+          recipients = users.filter((u) => u.role === "manager" && u.departmentIds.includes(entry.departmentId)).map(u => u.id);
+        } else {
+          recipients = [entry.authorId];
+        }
+
+        if (recipients.length > 0) {
+          setNotifications((prev) => [
+            ...recipients.map((id) => ({
+              id: nextId("n"),
+              kind: "comment" as NotificationKind,
+              recipientId: id,
+              title: `New Comment: ${modName}`,
+              body: `${user.name} commented: "${body.substring(0, 30)}${body.length > 30 ? '...' : ''}"`,
+              createdAt: now,
+              read: false,
+              entryId,
+            })),
+            ...prev,
+          ]);
+        }
       }
     },
     [entries, logActivity, user],

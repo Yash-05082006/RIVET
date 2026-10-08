@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { formatDateTime } from "../../lib/formatDate";
 
@@ -8,7 +8,7 @@ export const Route = createFileRoute("/app/notifications")({
 
 function NotificationsPage() {
   const user = useCurrentUser();
-  const { myNotifications, markRead, markAllRead } = useRivet();
+  const { myNotifications, markRead, markAllRead, entries } = useRivet();
 
   return (
     <div className="space-y-8">
@@ -53,9 +53,41 @@ function NotificationsPage() {
                   {n.body && (
                     <p className="mt-0.5 text-sm text-muted-foreground">{n.body}</p>
                   )}
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {formatDateTime(n.createdAt)}
-                  </p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateTime(n.createdAt)}
+                    </p>
+                    {n.entryId && (() => {
+                      const entry = entries.find(e => e.id === n.entryId);
+                      if (!entry) return null;
+                      
+                      // Using canReviewEntry from permissions would be ideal, but for simplicity here we check role.
+                      // Admin/Manager can go to approvals detail for pending/approved entries if they are not the author (or we just let them try)
+                      const isReviewer = (user.role === "admin" || user.role === "manager") && entry.authorId !== user.id;
+
+                      if (isReviewer) {
+                        return (
+                          <Link 
+                            to="/app/approvals/$entryId"
+                            params={{ entryId: n.entryId }}
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            View Details
+                          </Link>
+                        );
+                      } else {
+                        return (
+                          <Link 
+                            to="/app/modules/$moduleKey/entry/$entryId"
+                            params={{ moduleKey: entry.moduleKey, entryId: n.entryId }}
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            View Details
+                          </Link>
+                        );
+                      }
+                    })()}
+                  </div>
                 </div>
                 {!n.read && (
                   <button
