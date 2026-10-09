@@ -29,6 +29,8 @@ export interface Department {
   code: string;
   managerIds: string[];
   moduleKeys: string[];
+  active?: boolean;
+  deleted?: boolean;
 }
 
 export type FieldType =
@@ -152,7 +154,7 @@ export interface ActivityItem {
 export interface AuditRecord {
   id: string;
   actorId: string;
-  action: ActivityAction | "deactivated" | "role_changed" | "exported";
+  action: ActivityAction | "deactivated" | "role_changed" | "exported" | "deleted" | "archived" | "activated";
   entity: string;
   entityId: string;
   departmentId?: string;

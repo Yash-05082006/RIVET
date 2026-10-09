@@ -1,12 +1,12 @@
 import { useRivet } from "../../lib/rivet/store";
-import { users, departments, modules, userName, departmentName } from "../../lib/rivet/demo-data";
+import { userName, departmentName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { formatDateTime } from "../../lib/formatDate";
 import { ActivityFeed } from "./ActivityFeed";
 
 export function AdminDashboard() {
-  const { reviewQueue, audit, activity } = useRivet();
+  const { reviewQueue, audit, activity, users, departments, modules } = useRivet();
 
   const activeUsers = users.filter((u) => u.active).length;
   const activeModules = modules.filter((m) => m.active).length;

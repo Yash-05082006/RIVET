@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Check, X, AlertCircle } from "lucide-react";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
-import { getModule, departmentName, users } from "../../../lib/rivet/demo-data";
+import { getModule, departmentName } from "../../../lib/rivet/demo-data";
 import { canReviewEntry } from "../../../lib/rivet/permissions";
 import { formatDate, formatDateTime } from "../../../lib/formatDate";
 
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/approvals/$entryId")({
 function EntryReviewPage() {
   const { entryId } = Route.useParams();
   const user = useCurrentUser();
-  const { entries, decide } = useRivet();
+  const { entries, decide, users } = useRivet();
   const navigate = useNavigate();
 
   const [rejectRemark, setRejectRemark] = useState("");

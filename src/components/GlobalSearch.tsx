@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, FileText, LayoutGrid, Users, Megaphone } from "lucide-react";
 import { useRivet } from "../lib/rivet/store";
 import { canModule, accessibleDepartments, accessibleModules } from "../lib/rivet/permissions";
-import { users, getModule } from "../lib/rivet/demo-data";
+import { getModule } from "../lib/rivet/demo-data";
 import { formatDateTime } from "../lib/formatDate";
 
 export function GlobalSearch() {
-  const { entries, campaigns, user } = useRivet();
+  const { entries, campaigns, user, users } = useRivet();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +23,7 @@ export function GlobalSearch() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const searchResults = (() => {
+  const searchResults = useMemo(() => {
     if (!query || query.length < 2 || !user) return [];
     
     const term = query.toLowerCase();
@@ -36,9 +36,7 @@ export function GlobalSearch() {
       linkParams?: any;
     }> = [];
 
-    // Search Users (Team members)
-    // Employee -> only own data or department team? PRD: employee (own data). But team members maybe only in their dept.
-    // Manager -> assigned dept, Admin -> org-wide.
+    // Search Users
     users.forEach((u) => {
       const isVisible = user.role === "admin" || 
                         user.id === u.id || 
@@ -84,14 +82,6 @@ export function GlobalSearch() {
     }
 
     // Search Entries
-    // Scope: employee (own data or dept shared data), manager (assigned dept), admin (org-wide)
-    // Fortunately, we can just use `canModule(user, "view", entry.moduleKey)` and `entry.authorId === user.id` etc.
-    // Actually, `store.tsx` has `visibleEntries` which respects permissions!
-    // Let's use `entries` but filter by `visibleEntries`? 
-    // Wait, we don't have `visibleEntries` exported from `useRivet`! Let's import it if we need, or just reimplement the check.
-    // Wait, let's look at `store.tsx` again.
-    
-    // I'll manually filter for simplicity based on store logic:
     const visibleEntries = entries.filter((e) => {
       if (user.role === "admin") return true;
       if (user.role === "manager") return user.departmentIds.includes(e.departmentId) && e.status !== "draft";
@@ -133,7 +123,7 @@ export function GlobalSearch() {
     });
 
     return results.slice(0, 10);
-  })();
+  }, [query, user, users, entries, campaigns]);
 
   return (
     <div className="relative flex-1 max-w-md" ref={containerRef}>

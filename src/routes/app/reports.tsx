@@ -3,7 +3,7 @@ import { Download, Calendar, Users, BarChart, FileText, CheckCircle } from "luci
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { useState, useMemo, useEffect } from "react";
 import { accessibleDepartments, accessibleModules } from "../../lib/rivet/permissions";
-import { users, departments, getModule, webinarSeries } from "../../lib/rivet/demo-data";
+import { getModule, webinarSeries } from "../../lib/rivet/demo-data";
 import { formatDate } from "../../lib/formatDate";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/app/reports")({
 });
 
 function ReportsPage() {
-  const { entries } = useRivet();
+  const { entries, users, departments } = useRivet();
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<"monthly" | "employee" | "meeting" | "calendar" | "export">("monthly");
   

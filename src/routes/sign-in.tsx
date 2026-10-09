@@ -11,7 +11,7 @@ export const Route = createFileRoute("/sign-in")({
 });
 
 function SignInPage() {
-  const { signIn } = useRivet();
+  const { signIn, users } = useRivet();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,8 +38,12 @@ function SignInPage() {
 
 
       if (userId) {
-
-
+        const accountUser = users.find(u => u.id === userId);
+        if (accountUser && !accountUser.active) {
+          setError("Your account has been deactivated. Please contact an administrator.");
+          setIsAuthenticating(false);
+          return;
+        }
         signIn(userId);
 
 

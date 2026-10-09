@@ -29,6 +29,8 @@ import {
   notifications as seedNotifications,
   campaigns as seedCampaigns,
   users,
+  departments,
+  modules as seedModules,
   getModule,
 } from "./demo-data";
 import type {
@@ -41,6 +43,8 @@ import type {
   NotificationKind,
   Role,
   User,
+  Department,
+  ModuleDef,
 } from "./types";
 
 const SESSION_KEY = "rivet.session.userId";
@@ -60,6 +64,17 @@ export function startDemoSession(role: Role) {
 function readStoredUserId(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(SESSION_KEY);
+}
+
+function getDiff(oldObj: any, updates: any) {
+  const diff = [];
+  for (const [k, v] of Object.entries(updates)) {
+    const oldV = oldObj[k];
+    if (JSON.stringify(oldV) !== JSON.stringify(v)) {
+      diff.push({ field: k, from: String(oldV), to: String(v) });
+    }
+  }
+  return diff.length > 0 ? diff : undefined;
 }
 
 interface RivetContextValue {
@@ -95,6 +110,16 @@ interface RivetContextValue {
   markAllRead: () => void;
   createCampaign: (input: Omit<Campaign, "id">) => string;
   updateCampaign: (id: string, updates: Partial<Omit<Campaign, "id">>) => void;
+  users: User[];
+  departments: Department[];
+  modules: ModuleDef[];
+  createUser: (user: Omit<User, "id">) => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
+  createDepartment: (dept: Omit<Department, "id">) => void;
+  updateDepartment: (id: string, updates: Partial<Department>) => void;
+  deleteDepartment: (id: string) => void;
+  createModule: (mod: Omit<ModuleDef, "key">) => void;
+  updateModule: (key: string, updates: Partial<ModuleDef>) => void;
 }
 
 const RivetContext = createContext<RivetContextValue | null>(null);
@@ -113,13 +138,16 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
   const [activity, setActivity] = useState<ActivityItem[]>(seedActivity);
   const [audit, setAudit] = useState<AuditRecord[]>(seedAudit);
+  const [appUsers, setAppUsers] = useState<User[]>(users);
+  const [appDepartments, setAppDepartments] = useState<Department[]>(departments);
+  const [appModules, setAppModules] = useState<ModuleDef[]>(seedModules);
 
   useEffect(() => {
     setUserId(readStoredUserId());
     setReady(true);
   }, []);
 
-  const user = useMemo(() => users.find((u) => u.id === userId) ?? null, [userId]);
+  const user = useMemo(() => appUsers.find((u) => u.id === userId) ?? null, [userId, appUsers]);
 
   // System reminders
   useEffect(() => {
@@ -538,7 +566,89 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     [logAudit, user],
   );
 
-  const value: RivetContextValue = {
+  const createUser = useCallback<RivetContextValue["createUser"]>((input) => {
+    const id = `u-${input.role}-${Date.now().toString().slice(-4)}`;
+    const newUser = { ...input, id };
+    users.push(newUser);
+    setAppUsers([...users]);
+    logAudit({ actorId: user?.id ?? "", action: "created", entity: "User", entityId: id });
+  }, [logAudit, user]);
+
+  const updateUser = useCallback<RivetContextValue["updateUser"]>((id, updates) => {
+    const idx = users.findIndex(u => u.id === id);
+    if (idx !== -1) {
+      const oldUser = users[idx];
+      let action: "edited" | "role_changed" | "deactivated" = "edited";
+      if (updates.active === false && oldUser.active === true) action = "deactivated";
+      else if (updates.role && updates.role !== oldUser.role) action = "role_changed";
+      
+      const diff = getDiff(oldUser, updates);
+      users[idx] = { ...oldUser, ...updates };
+      setAppUsers([...users]);
+      logAudit({ actorId: user?.id ?? "", action, entity: "User", entityId: id, diff });
+    }
+  }, [logAudit, user]);
+
+  const createDepartment = useCallback<RivetContextValue["createDepartment"]>((input) => {
+    const id = input.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const newDept = { ...input, id };
+    departments.push(newDept);
+    setAppDepartments([...departments]);
+    logAudit({ actorId: user?.id ?? "", action: "created", entity: "Department", entityId: id });
+  }, [logAudit, user]);
+
+  const updateDepartment = useCallback<RivetContextValue["updateDepartment"]>((id, updates) => {
+    const idx = departments.findIndex(d => d.id === id);
+    if (idx !== -1) {
+      const diff = getDiff(departments[idx], updates);
+      departments[idx] = { ...departments[idx], ...updates };
+      setAppDepartments([...departments]);
+      logAudit({ actorId: user?.id ?? "", action: "edited", entity: "Department", entityId: id, diff });
+    }
+  }, [logAudit, user]);
+
+  const deleteDepartment = useCallback<RivetContextValue["deleteDepartment"]>((id) => {
+    const hasUsers = users.some(u => u.departmentIds.includes(id));
+    const hasModules = seedModules.some(m => m.departmentId === id);
+    const hasEntries = entries.some(e => e.departmentId === id);
+    const hasAudit = audit.some(a => a.departmentId === id);
+    const hasLinks = hasUsers || hasModules || hasEntries || hasAudit;
+
+    const idx = departments.findIndex(d => d.id === id);
+    if (idx !== -1) {
+      if (hasLinks) {
+        // Soft archive
+        departments[idx] = { ...departments[idx], deleted: true, active: false };
+        setAppDepartments([...departments]);
+        logAudit({ actorId: user?.id ?? "", action: "archived", entity: "Department", entityId: id });
+      } else {
+        // Hard delete
+        departments.splice(idx, 1);
+        setAppDepartments([...departments]);
+        logAudit({ actorId: user?.id ?? "", action: "deleted", entity: "Department", entityId: id });
+      }
+    }
+  }, [logAudit, user, entries, audit]);
+
+  const createModule = useCallback<RivetContextValue["createModule"]>((input) => {
+    const key = input.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const newMod = { ...input, key };
+    seedModules.push(newMod);
+    setAppModules([...seedModules]);
+    logAudit({ actorId: user?.id ?? "", action: "created", entity: "Module", entityId: key, departmentId: input.departmentId });
+  }, [logAudit, user]);
+
+  const updateModule = useCallback<RivetContextValue["updateModule"]>((key, updates) => {
+    const idx = seedModules.findIndex(m => m.key === key);
+    if (idx !== -1) {
+      const diff = getDiff(seedModules[idx], updates);
+      seedModules[idx] = { ...seedModules[idx], ...updates };
+      setAppModules([...seedModules]);
+      logAudit({ actorId: user?.id ?? "", action: "edited", entity: "Module", entityId: key, diff });
+    }
+  }, [logAudit, user]);
+
+  const value: RivetContextValue = useMemo(() => ({
     ready,
     user,
     signIn,
@@ -564,7 +674,24 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     markAllRead,
     createCampaign,
     updateCampaign,
-  };
+    users: appUsers,
+    departments: appDepartments,
+    modules: appModules,
+    createUser,
+    updateUser,
+    createDepartment,
+    updateDepartment,
+    deleteDepartment,
+    createModule,
+    updateModule,
+  }), [
+    ready, user, signIn, signOut, entries, campaignList, notifications, activity, audit, 
+    visibleEntries, myEntries, reviewQueue, approvalEntries, myNotifications, unreadCount, 
+    submitEntry, createEntry, updateEntryValues, linkEntryToCampaign, decide, addComment, 
+    markRead, markAllRead, createCampaign, updateCampaign, appUsers, appDepartments, 
+    appModules, createUser, updateUser, createDepartment, updateDepartment, 
+    deleteDepartment, createModule, updateModule
+  ]);
 
   return <RivetContext.Provider value={value}>{children}</RivetContext.Provider>;
 }

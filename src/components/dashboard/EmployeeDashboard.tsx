@@ -1,5 +1,5 @@
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
-import { modules, moduleName } from "../../lib/rivet/demo-data";
+import { moduleName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
 import { FileEdit, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
@@ -38,7 +38,7 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
 
 export function EmployeeDashboard() {
   const user = useCurrentUser();
-  const { myEntries, activity } = useRivet();
+  const { myEntries, activity, modules } = useRivet();
 
   const attentionRequired = myEntries.filter(
     (e) => e.status === "rejected" || e.status === "draft"

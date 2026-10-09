@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, Clock, LayoutGrid, List, X } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
-import { departments, getModule, moduleName, departmentName, users } from "../../../lib/rivet/demo-data";
+import { getModule, moduleName, departmentName } from "../../../lib/rivet/demo-data";
 import { accessibleDepartments, hasPermission } from "../../../lib/rivet/permissions";
 import { formatDate, formatDateTime } from "../../../lib/formatDate";
 import type { LogEntry } from "../../../lib/rivet/types";
@@ -43,7 +43,7 @@ function StatusLabel({ status }: { status: ApprovalStatus }) {
 
 function ApprovalsPage() {
   const user = useCurrentUser();
-  const { approvalEntries, decide } = useRivet();
+  const { approvalEntries, decide, users, departments } = useRivet();
   const admin = hasPermission(user, "admin");
   const userDepartments = accessibleDepartments(user);
   const [view, setView] = useState<ViewMode>("list");
@@ -116,7 +116,7 @@ function ApprovalsPage() {
         {admin && <label className="grid gap-1 text-xs font-medium text-muted-foreground">Department
           <select aria-label="Filter by department" value={departmentFilter} onChange={(event) => { setDepartmentFilter(event.target.value); setModuleFilter("all"); }} className="h-9 min-w-40 rounded-md border border-input bg-background px-3 text-sm text-foreground">
             <option value="all">All departments</option>
-            {departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
+            {departments.filter(d => !d.deleted).map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
           </select>
         </label>}
         <label className="grid gap-1 text-xs font-medium text-muted-foreground">Module
@@ -127,7 +127,7 @@ function ApprovalsPage() {
         </label>
         <label className="grid gap-1 text-xs font-medium text-muted-foreground">Status
           <select aria-label="Filter by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-9 min-w-36 rounded-md border border-input bg-background px-3 text-sm text-foreground">
-            <option value="all">All statuses</option>
+            <option value="all">All Status</option>
             <option value="submitted">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
           </select>
         </label>

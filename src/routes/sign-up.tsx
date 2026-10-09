@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
-import { departments } from "../lib/rivet/demo-data";
+import { useRivet } from "../lib/rivet/store";
 import { isValidDemoEmail } from "../lib/rivet/demo-accounts";
 import { CheckCircle2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/sign-up")({
 
 function SignUpPage() {
   const searchParams = Route.useSearch() as any;
+  const { departments } = useRivet();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -172,7 +173,7 @@ function SignUpPage() {
               className={`w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 ${errors.departmentId ? 'border-red-500 focus:ring-red-200' : 'border-border focus:border-primary focus:ring-primary-light'}`}
             >
               <option value="">Select a department...</option>
-              {departments.map((d) => (
+              {departments.filter(d => d.active && !d.deleted).map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>
