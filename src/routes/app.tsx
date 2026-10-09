@@ -9,6 +9,7 @@ import { useRivet } from "../lib/rivet/store";
 import { sectionsForUser, roleLabel } from "../lib/rivet/nav";
 import { canAccessPath } from "../lib/rivet/permissions";
 import mainLogo from "../../assets/RIVET_main_logo_removebg.png";
+import { GlobalSearch } from "../components/GlobalSearch";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: () => {
@@ -220,7 +221,7 @@ function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden pt-14 md:pt-0">
         <header className="flex h-14 items-center justify-between border-b bg-background px-4 lg:px-8">
           <div className="flex items-center gap-4 flex-1">
-            {/* Search removed as per PRD */}
+            <GlobalSearch />
           </div>
           <div className="flex items-center gap-4">
             <Link to="/app/notifications" className="relative p-2 text-muted-foreground hover:text-foreground">
