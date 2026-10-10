@@ -173,7 +173,7 @@ function SignUpPage() {
               className={`w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 ${errors.departmentId ? 'border-red-500 focus:ring-red-200' : 'border-border focus:border-primary focus:ring-primary-light'}`}
             >
               <option value="">Select a department...</option>
-              {departments.filter(d => d.active && !d.deleted).map((d) => (
+              {departments.filter(d => d.active !== false && !d.deleted).map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>

@@ -227,7 +227,7 @@ function ModulesAdminPage() {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <option value="">Select a department...</option>
-                    {departments.filter(d => d.active && !d.deleted).map(d => (
+                    {departments.filter(d => d.active !== false && !d.deleted).map(d => (
                       <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
                   </select>
