@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { differenceInCalendarDays, startOfWeek } from "date-fns";
 import { ActivityItem } from "../../lib/rivet/types";
 import { userName, moduleName } from "../../lib/rivet/demo-data";
 import { formatDateTime } from "../../lib/formatDate";
@@ -18,6 +20,21 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ activities, title = "Recent Activity" }: ActivityFeedProps) {
+  const [now, setNow] = useState(() => new Date());
+  const [seenId, setSeenId] = useState(activities[0]?.id);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const groups = new Map<string, ActivityItem[]>();
+  for (const item of activities) {
+    const date = new Date(item.createdAt);
+    const days = differenceInCalendarDays(now, date);
+    const label = days <= 0 ? "Today" : days === 1 ? "Yesterday" :
+      date >= startOfWeek(now, { weekStartsOn: 1 }) ? "Earlier this week" :
+      now.getMonth() === date.getMonth() && now.getFullYear() === date.getFullYear() ? "Earlier this month" : "Older";
+    groups.set(label, [...(groups.get(label) ?? []), item]);
+  }
   if (activities.length === 0) {
     return (
       <section>
@@ -36,9 +53,13 @@ export function ActivityFeed({ activities, title = "Recent Activity" }: Activity
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </h2>
+      {seenId && activities.some((item) => item.id === seenId) && seenId !== activities[0]?.id &&
+        <button className="mb-2 text-sm font-medium text-primary" onClick={() => setSeenId(activities[0]?.id)}>New activity</button>}
       <div className="overflow-hidden rounded-lg border border-border bg-background">
         <ul className="divide-y divide-border">
-          {activities.map((item) => {
+          {[...groups].map(([label, items]) => <li key={label}>
+            <h3 className="bg-surface px-4 py-2 text-xs font-medium text-muted-foreground">{label}</h3>
+            <ul className="divide-y divide-border">{items.map((item) => {
             let Icon: LucideIcon;
             let iconColor = "";
             let actionText = "";
@@ -53,6 +74,11 @@ export function ActivityFeed({ activities, title = "Recent Activity" }: Activity
                 Icon = XCircle;
                 iconColor = "text-red-500 bg-red-50";
                 actionText = "rejected";
+                break;
+              case "reminded":
+                Icon = Clock;
+                iconColor = "text-amber-500 bg-amber-50";
+                actionText = "received a daily submission reminder";
                 break;
               case "submitted":
                 Icon = Clock;
@@ -117,7 +143,7 @@ export function ActivityFeed({ activities, title = "Recent Activity" }: Activity
                 </div>
               </li>
             );
-          })}
+          })}</ul></li>)}
         </ul>
       </div>
     </section>

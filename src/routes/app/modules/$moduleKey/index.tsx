@@ -1,10 +1,12 @@
+import { canEditEntry, hasPermission } from "../../../../lib/rivet/permissions";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useState } from "react";
 import { ArrowLeft, Plus, TrendingUp, Calendar } from "lucide-react";
 import { getModule, departmentName, userName } from "../../../../lib/rivet/demo-data";
 import { useRivet, useCurrentUser } from "../../../../lib/rivet/store";
 import { canCreateIn } from "../../../../lib/rivet/nav";
 import type { LogEntry } from "../../../../lib/rivet/types";
+import { format } from "date-fns";
 import { formatDate } from "../../../../lib/formatDate";
 
 export const Route = createFileRoute("/app/modules/$moduleKey/")({
@@ -131,8 +133,11 @@ function WeeklyMeetingSummary({ entries }: { entries: LogEntry[] }) {
 
 /** Daily Meeting Attendance: daily + monthly totals per person and team */
 function AttendanceSummary({ entries, isManager }: { entries: LogEntry[]; isManager: boolean }) {
-  const relevant = entries.filter((e) => e.status === "approved" || e.status === "submitted");
-  if (relevant.length === 0) return null;
+  const [period, setPeriod] = useState<"day" | "month">("month");
+  const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const relevant = entries.filter((entry) => (entry.status === "approved" || entry.status === "submitted") &&
+    (period === "day" ? entry.entryDate === date : entry.entryDate.startsWith(date.slice(0, 7))));
+
 
   // Personal totals (current user's entries)
   const totalPhysical = relevant.reduce((s, e) => s + (Number(e.values.physical) || 0), 0);
@@ -173,6 +178,15 @@ function AttendanceSummary({ entries, isManager }: { entries: LogEntry[]; isMana
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-3 text-sm">
+        <label>Period <select className="rounded border p-1" value={period} onChange={(event) => setPeriod(event.target.value === "day" ? "day" : "month")}>
+          <option value="day">Daily</option><option value="month">Monthly</option>
+        </select></label>
+        <label>{period === "day" ? "Date" : "Month"} <input className="rounded border p-1" type={period === "day" ? "date" : "month"}
+          value={period === "day" ? date : date.slice(0, 7)} onChange={(event) => {
+            if (event.target.value) setDate(period === "day" ? event.target.value : `${event.target.value}-01`);
+          }} /></label>
+      </div>
       {/* Per-person breakdown for managers */}
       {byAuthor && byAuthor.size > 0 && (
         <div className="rounded-lg border border-border bg-background shadow-sm overflow-x-auto mt-3">
@@ -216,7 +230,7 @@ function AttendanceSummary({ entries, isManager }: { entries: LogEntry[]; isMana
 function ModuleDetailPage() {
   const { moduleKey } = Route.useParams();
   const user = useCurrentUser();
-  const { myEntries, visibleEntries } = useRivet();
+  const { visibleEntries } = useRivet();
   const navigate = useNavigate();
 
   const mod = getModule(moduleKey);
@@ -234,26 +248,14 @@ function ModuleDetailPage() {
 
   const canCreate = canCreateIn(user, moduleKey);
 
-  // Department-scoped modules (like webinar planner) show entries for the whole department.
-  // Employee-scoped modules show only the user's entries for employees, all visible for managers/admins.
-  const moduleEntries = useMemo(() => {
-    if (mod.scope === "department") {
-      // Department-scoped: all visible entries for this module
-      return visibleEntries
-        .filter((e) => e.moduleKey === moduleKey)
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-    }
-    // Employee-scoped
-    return (user.role === "employee" ? myEntries : visibleEntries)
-      .filter((e) => e.moduleKey === moduleKey)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  }, [mod.scope, moduleKey, myEntries, visibleEntries, user.role]);
+  const moduleEntries = visibleEntries.filter((entry) => entry.moduleKey === moduleKey)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   // Determine which table columns to show from ModuleDef.tableFields
-  const tableFieldDefs = mod.fields.filter((f) => mod.tableFields.includes(f.key));
+  const tableFieldDefs = mod.fields.filter((f) => (mod.tableFields ?? mod.fields.map((field) => field.key)).includes(f.key));
 
   // For manager/admin views, show author column for all entries
-  const showAuthorColumn = user.role !== "employee";
+  const showAuthorColumn = hasPermission(user, "review");
 
   return (
     <div className="space-y-8">
@@ -303,15 +305,17 @@ function ModuleDetailPage() {
       {/* Auto-computed summary panels */}
       {moduleKey === "weekly-meeting-report" && <WeeklyMeetingSummary entries={moduleEntries} />}
       {moduleKey === "daily-meeting-attendance" && (
-        <AttendanceSummary entries={moduleEntries} isManager={user.role !== "employee"} />
+        <AttendanceSummary entries={moduleEntries} isManager={hasPermission(user, "review")} />
       )}
+
+      {moduleKey === "webinar-series-planner" && <WebinarSuggestions canPromote={canCreate} />}
 
       {/* Entry table */}
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">
           {mod.scope === "department"
             ? "All Entries"
-            : user.role === "employee"
+            : !hasPermission(user, "review")
               ? "My Entries"
               : "Entries"}
         </h2>
@@ -337,10 +341,8 @@ function ModuleDetailPage() {
             <tbody className="divide-y divide-border">
               {moduleEntries.length > 0 ? (
                 moduleEntries.map((entry) => {
-                  const isDraft = entry.status === "draft";
                   const isRejected = entry.status === "rejected";
-                  const isOwner = entry.authorId === user.id;
-                  const canEdit = isOwner && (isDraft || isRejected);
+                  const canEdit = canEditEntry(user, entry);
 
                   return (
                     <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
@@ -379,7 +381,7 @@ function ModuleDetailPage() {
                             params={{ moduleKey, entryId: entry.id }}
                             className="text-sm font-medium text-primary hover:text-primary-hover transition-colors whitespace-nowrap"
                           >
-                            {isRejected ? "Fix & Resubmit" : "Continue editing"}
+                            {isRejected ? "Fix & Resubmit" : mod.approvalRequired ? "Continue editing" : "Edit"}
                           </Link>
                         ) : (
                           <Link
@@ -420,5 +422,28 @@ function ModuleDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function WebinarSuggestions({ canPromote }: { canPromote: boolean }) {
+  const { webinarSuggestions, suggestWebinar } = useRivet();
+  const [topic, setTopic] = useState("");
+  return (
+    <section className="space-y-3 rounded-lg border border-border p-4">
+      <h2 className="font-medium">Topic suggestions</h2>
+      <form className="flex flex-wrap gap-2" onSubmit={(event) => {
+        event.preventDefault();
+        if (!topic.trim()) return;
+        suggestWebinar(topic);
+        setTopic("");
+      }}>
+        <input aria-label="Webinar topic" value={topic} onChange={(event) => setTopic(event.target.value)} className="rounded border px-3 py-2 text-sm" required />
+        <button className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground">Suggest topic</button>
+      </form>
+      {webinarSuggestions.map((suggestion) => <div key={suggestion.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <span>{suggestion.topic} · {userName(suggestion.authorId)}</span>
+        {canPromote && <Link to="/app/modules/$moduleKey/new" params={{ moduleKey: "webinar-series-planner" }} search={{ suggestion: suggestion.id }} className="font-medium text-primary">Promote to calendar</Link>}
+      </div>)}
+    </section>
   );
 }

@@ -19,13 +19,18 @@ import {
 
 import {
   canDecideEntry,
+  canModule,
+  hasPermission,
+  canViewEntry,
   canEditEntry,
+  canCreateFor,
   canReviewEntry,
 } from "./permissions";
 import {
   activity as seedActivity,
   auditRecords as seedAudit,
   logEntries as seedEntries,
+  webinarSeries,
   notifications as seedNotifications,
   campaigns as seedCampaigns,
   users,
@@ -77,7 +82,18 @@ function getDiff(oldObj: any, updates: any) {
   return diff.length > 0 ? diff : undefined;
 }
 
+interface WebinarSuggestion {
+  id: string;
+  authorId: string;
+  topic: string;
+}
+
 interface RivetContextValue {
+  reminderTime: string;
+  setReminderTime: (time: string) => void;
+  webinarSuggestions: WebinarSuggestion[];
+  suggestWebinar: (topic: string) => void;
+  removeWebinarSuggestion: (id: string) => void;
   ready: boolean;
   user: User | null;
   signIn: (userId: string) => void;
@@ -97,12 +113,13 @@ interface RivetContextValue {
   submitEntry: (id: string) => void;
   createEntry: (input: {
     moduleKey: string;
+    authorId?: string;
     values: Record<string, string | number | boolean>;
     entryDate: string;
     submit: boolean;
     campaignId?: string;
   }) => string;
-  updateEntryValues: (id: string, values: Record<string, string | number | boolean>) => void;
+  updateEntryValues: (id: string, values: Record<string, string | number | boolean>) => boolean;
   linkEntryToCampaign: (entryId: string, campaignId: string | undefined) => void;
   decide: (ids: string[], decision: "approved" | "rejected", remarks?: string) => void;
   addComment: (entryId: string, body: string) => void;
@@ -130,10 +147,26 @@ function nextId(prefix: string) {
   return `${prefix}-${seq}`;
 }
 
+export function hasDuplicateEntry(entries: LogEntry[], candidate: Pick<LogEntry, "moduleKey" | "authorId" | "entryDate" | "values">, existingId?: string) {
+  const branch = candidate.moduleKey === "branch-wise-meeting-data";
+  if (!branch && candidate.moduleKey !== "daily-activity-log") return false;
+  return entries.some((entry) => entry.id !== existingId && entry.moduleKey === candidate.moduleKey &&
+    entry.authorId === candidate.authorId && entry.entryDate === candidate.entryDate &&
+    (!branch || (String(entry.values.branch ?? "").trim().toLowerCase() === String(candidate.values.branch ?? "").trim().toLowerCase() &&
+      entry.values.meetingType === candidate.values.meetingType)));
+}
+
 export function RivetProvider({ children }: { children: ReactNode }) {
+  const [reminderTimes, setReminderTimes] = useState<Record<string, string>>({});
+  const [webinarSuggestions, setWebinarSuggestions] = useState<WebinarSuggestion[]>([]);
   const [ready, setReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [entries, setEntries] = useState<LogEntry[]>(seedEntries);
+  const [entries, setEntries] = useState<LogEntry[]>(() => [...seedEntries, ...webinarSeries.filter((webinar) => !seedEntries.some((entry) => entry.moduleKey === "webinar-series-planner" && Number(entry.values.seriesNumber) === webinar.seriesNumber)).map((webinar): LogEntry => ({
+    id: webinar.id, moduleKey: "webinar-series-planner", departmentId: "data-management",
+    authorId: DEMO_USER_BY_ROLE.admin, entryDate: webinar.scheduledDate, status: "approved",
+    createdAt: webinar.scheduledDate, updatedAt: webinar.scheduledDate, comments: [],
+    values: { ...webinar, notes: webinar.notes ?? "" },
+  }))]);
   const [campaignList, setCampaignList] = useState<Campaign[]>(seedCampaigns);
   const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
   const [activity, setActivity] = useState<ActivityItem[]>(seedActivity);
@@ -147,52 +180,12 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     setReady(true);
   }, []);
 
-  const user = useMemo(() => appUsers.find((u) => u.id === userId) ?? null, [userId, appUsers]);
+  const user = useMemo(() => appUsers.find((u) => u.id === userId && u.active) ?? null, [userId, appUsers]);
 
-  // System reminders
-  useEffect(() => {
-    if (!user) return;
-    const now = new Date().toISOString();
-
-    if (user.role === "employee") {
-      setNotifications((prev) => {
-        const hasReminder = prev.some((n) => n.recipientId === user.id && n.kind === "reminder" && n.title === "Missing Daily Submission");
-        if (!hasReminder) {
-          return [{
-            id: nextId("n"),
-            kind: "reminder",
-            recipientId: user.id,
-            title: "Missing Daily Submission",
-            body: "You haven't submitted your Daily Activity for today.",
-            createdAt: now,
-            read: false,
-          }, ...prev];
-        }
-        return prev;
-      });
-    }
-
-    if (user.role === "manager") {
-      const pendingCount = entries.filter((e) => e.status === "submitted" && user.departmentIds.includes(e.departmentId)).length;
-      if (pendingCount > 1) {
-        setNotifications((prev) => {
-          const hasReminder = prev.some((n) => n.recipientId === user.id && n.kind === "reminder" && n.title === "Multiple pending entries");
-          if (!hasReminder) {
-            return [{
-              id: nextId("n"),
-              kind: "reminder",
-              recipientId: user.id,
-              title: "Multiple pending entries",
-              body: `You have ${pendingCount} entries awaiting your review.`,
-              createdAt: now,
-              read: false,
-            }, ...prev];
-          }
-          return prev;
-        });
-      }
-    }
-  }, [user, entries]);
+  const reminderTime = user ? reminderTimes[user.id] ?? "18:00" : "18:00";
+  const setReminderTime = useCallback((time: string) => {
+    if (user && /^([01]\d|2[0-3]):[0-5]\d$/.test(time)) setReminderTimes((current) => ({ ...current, [user.id]: time }));
+  }, [user]);
 
   const signIn = useCallback((id: string) => {
     window.localStorage.setItem(SESSION_KEY, id);
@@ -204,49 +197,70 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     setUserId(null);
   }, []);
 
-  const visibleEntries = useMemo(() => {
-    if (!user) return [];
-    if (user.role === "admin") return entries;
-    if (user.role === "manager") {
-      return entries.filter(
-        (e) => user.departmentIds.includes(e.departmentId) && e.status !== "draft",
-      );
-    }
-    // Employees: own entries + all non-draft entries from department-scoped modules they belong to
-    return entries.filter((e) => {
-      if (e.authorId === user.id) return true;
-      // Department-scoped modules: employees can see all non-draft entries in their department
-      const mod = getModule(e.moduleKey);
-      if (mod?.scope === "department" && user.departmentIds.includes(e.departmentId) && e.status !== "draft") {
-        return true;
-      }
-      return false;
-    });
-  }, [entries, user]);
+  const visibleEntries = useMemo(
+    () => entries.filter((entry) => canViewEntry(user, entry)),
+    [entries, user, appModules, appDepartments],
+  );
 
   const myEntries = useMemo(
-    () => (user ? entries.filter((e) => e.authorId === user.id) : []),
-    [entries, user],
+    () => visibleEntries.filter((entry) => entry.authorId === user?.id && entry.moduleKey !== "webinar-series-planner"),
+    [visibleEntries, user],
   );
-
-  const reviewQueue = useMemo(() => {
-    if (!user || user.role === "employee") return [];
-    const scoped =
-      user.role === "admin"
-        ? entries
-        : entries.filter((e) => user.departmentIds.includes(e.departmentId));
-    return scoped
-      .filter((e) => e.status === "submitted")
-      .sort((a, b) => (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
-  }, [entries, user]);
 
   const approvalEntries = useMemo(
-    () =>
-      entries
-        .filter((entry) => entry.status !== "draft" && canReviewEntry(user, entry))
-        .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? "")),
-    [entries, user],
+    () => visibleEntries
+      .filter((entry) => entry.status !== "draft" && canReviewEntry(user, entry))
+      .sort((a, b) => (a.submittedAt ?? "").localeCompare(b.submittedAt ?? "")),
+    [visibleEntries, user],
   );
+
+  const reviewQueue = useMemo(
+    () => approvalEntries.filter((entry) => entry.status === "submitted"),
+    [approvalEntries],
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    function updateReminder() {
+      const now = new Date();
+      const day = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+      if (user && hasPermission(user, "review") && !hasPermission(user, "admin")) {
+        if (now.getHours() < 9 || reviewQueue.length === 0) return;
+        const id = `digest-${user.id}-${day}`;
+        setNotifications((previous) => previous.some((item) => item.id === id) ? previous : [
+          { id, recipientId: user.id, kind: "reminder", title: "Daily approval summary", body: `${reviewQueue.length} submissions await review. This is an in-app summary.`, createdAt: now.toISOString(), read: false },
+          ...previous,
+        ]);
+        return;
+      }
+      if (hasPermission(user, "admin")) return;
+      const dailyModules = appModules.filter((mod) => mod.cadence === "daily" && canModule(user, "create", mod.key));
+      const submitted = myEntries.some((entry) => entry.entryDate === day && entry.status !== "draft" && dailyModules.some((mod) => mod.key === entry.moduleKey));
+      const id = `daily-reminder-${user!.id}-${day}`;
+      const clock = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const shouldRemind = dailyModules.length > 0 && !submitted && clock >= reminderTime;
+      setNotifications((previous) => {
+        const relevant = previous.filter((item) => !(item.recipientId === user!.id && item.kind === "reminder" && item.title === "Missing Daily Submission" && (item.id !== id || !shouldRemind)));
+        if (shouldRemind && !relevant.some((item) => item.id === id)) {
+          return [{ id, recipientId: user!.id, kind: "reminder", title: "Missing Daily Submission", body: "You have no daily submission for today.", createdAt: now.toISOString(), read: false }, ...relevant];
+        }
+        return relevant.length === previous.length ? previous : relevant;
+      });
+    }
+    updateReminder();
+    const timer = window.setInterval(updateReminder, 60_000);
+    return () => window.clearInterval(timer);
+  }, [user, myEntries, appModules, reminderTime, reviewQueue]);
+
+  const suggestWebinar = useCallback((topic: string) => {
+    if (!user || !canModule(user, "view", "webinar-series-planner") || !topic.trim()) return;
+    setWebinarSuggestions((current) => [...current, { id: crypto.randomUUID(), authorId: user.id, topic: topic.trim() }]);
+  }, [user]);
+
+  const removeWebinarSuggestion = useCallback((id: string) => {
+    if (!canModule(user, "create", "webinar-series-planner")) return;
+    setWebinarSuggestions((current) => current.filter((suggestion) => suggestion.id !== id));
+  }, [user]);
 
   const myNotifications = useMemo(
     () =>
@@ -273,12 +287,17 @@ export function RivetProvider({ children }: { children: ReactNode }) {
 
   const submitEntry = useCallback(
     (id: string) => {
-      if (!user) return;
+      const target = entries.find((entry) => entry.id === id);
+      if (!user || !target || target.authorId !== user.id || !canEditEntry(user, target) || !getModule(target.moduleKey)?.approvalRequired) return;
       const now = new Date().toISOString();
       setEntries((prev) =>
         prev.map((e) =>
           e.id === id
-            ? { ...e, status: "submitted" as EntryStatus, submittedAt: now, updatedAt: now }
+            ? { ...e, status: "submitted" as EntryStatus,
+                previousDecisions: e.decidedAt && e.status === "rejected" ? [...(e.previousDecisions ?? []), {
+                  status: e.status, at: e.decidedAt, by: e.decidedById, remarks: e.managerRemarks,
+                }] : e.previousDecisions,
+                submittedAt: now, updatedAt: now, managerRemarks: undefined, decidedAt: undefined, decidedById: undefined }
             : e,
         ),
       );
@@ -298,7 +317,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
           entityId: id,
           departmentId: entry.departmentId,
         });
-        const managers = users.filter((u) => u.role === "manager" && u.departmentIds.includes(entry.departmentId));
+        const managers = users.filter((u) => u.role === "manager" && canReviewEntry(u, entry));
         if (managers.length > 0) {
           const modName = getModule(entry.moduleKey)?.name ?? "Entry";
           setNotifications((prev) => [
@@ -321,28 +340,36 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   );
 
   const createEntry = useCallback<RivetContextValue["createEntry"]>(
-    ({ moduleKey, values, entryDate, submit, campaignId }) => {
-      if (!user) return "";
+    ({ moduleKey, values, entryDate, submit, campaignId, authorId }) => {
       const mod = getModule(moduleKey);
+      const author = authorId ? users.find((person) => person.id === authorId) : user ?? undefined;
+      if (!user || !mod || !author || !canCreateFor(user, author, moduleKey) || (author.id !== user.id && !submit)) return "";
+      if (hasDuplicateEntry(entries, { moduleKey, authorId: author.id, entryDate, values })) return "";
+      const pending = submit && mod.approvalRequired;
+      const shared = !mod.approvalRequired;
       const now = new Date().toISOString();
-      const id = `E-${1100 + entries.length}`;
+      const id = `E-${crypto.randomUUID()}`;
+      if (moduleKey === "webinar-series-planner") {
+        const seriesNumber = Math.max(0, ...entries.filter((entry) => entry.moduleKey === moduleKey).map((entry) => Number(entry.values.seriesNumber) || 0)) + 1;
+        values = { ...values, seriesNumber };
+      }
       const entry: LogEntry = {
         id,
         moduleKey,
         departmentId: mod?.departmentId ?? user.departmentIds[0],
-        authorId: user.id,
+        authorId: author.id,
         entryDate,
-        status: submit ? "submitted" : "draft",
+        status: shared ? "approved" : pending ? "submitted" : "draft",
         values,
         campaignId: campaignId || undefined,
         createdAt: now,
         updatedAt: now,
-        submittedAt: submit ? now : undefined,
+        submittedAt: pending ? now : undefined,
         comments: [],
       };
       setEntries((prev) => [entry, ...prev]);
       logActivity({
-        action: submit ? "submitted" : "created",
+        action: pending ? "submitted" : "created",
         actorId: user.id,
         entryId: id,
         moduleKey,
@@ -350,13 +377,13 @@ export function RivetProvider({ children }: { children: ReactNode }) {
       });
       logAudit({
         actorId: user.id,
-        action: submit ? "submitted" : "created",
+        action: pending ? "submitted" : "created",
         entity: "Log Entry",
         entityId: id,
         departmentId: entry.departmentId,
       });
-      if (submit) {
-        const managers = users.filter((u) => u.role === "manager" && u.departmentIds.includes(entry.departmentId));
+      if (pending) {
+        const managers = users.filter((u) => u.role === "manager" && canReviewEntry(u, entry));
         if (managers.length > 0) {
           setNotifications((prev) => [
             ...managers.map((m) => ({
@@ -375,25 +402,34 @@ export function RivetProvider({ children }: { children: ReactNode }) {
       }
       return id;
     },
-    [entries.length, logActivity, logAudit, user],
+    [entries, logActivity, logAudit, user],
   );
 
   const linkEntryToCampaign = useCallback<RivetContextValue["linkEntryToCampaign"]>(
     (entryId, campaignId) => {
+      const entry = entries.find((item) => item.id === entryId);
+      if (!user || !entry || !canEditEntry(user, entry) || (campaignId && !campaignList.some((campaign) => campaign.id === campaignId && campaign.departmentId === entry.departmentId))) return;
+      if (entry.campaignId === campaignId) return;
+      logAudit({ actorId: user.id, action: "edited", entity: "Log Entry", entityId: entryId, departmentId: entry.departmentId,
+        diff: [{ field: "campaignId", from: entry.campaignId ?? "", to: campaignId ?? "" }] });
       setEntries((prev) =>
         prev.map((e) =>
           e.id === entryId ? { ...e, campaignId: campaignId || undefined, updatedAt: new Date().toISOString() } : e,
         ),
       );
     },
-    [],
+    [entries, campaignList, logAudit, user],
   );
 
   const updateEntryValues = useCallback<RivetContextValue["updateEntryValues"]>(
     (id, values) => {
-      if (!user) return;
+      if (!user) return false;
       const entry = entries.find((item) => item.id === id);
-      if (!entry || !canEditEntry(user, entry)) return;
+      if (!entry || !canEditEntry(user, entry)) return false;
+      const dateKey = getModule(entry.moduleKey)?.fields.find((field) => field.type === "date" || field.type === "month")?.key;
+      const entryDate = String((dateKey && values[dateKey]) || entry.entryDate);
+      if (dateKey && !values[dateKey]) values = { ...values, [dateKey]: entryDate };
+      if (hasDuplicateEntry(entries, { ...entry, entryDate, values: { ...entry.values, ...values } }, id)) return false;
       const now = new Date().toISOString();
       setEntries((prev) =>
         prev.map((e) =>
@@ -401,6 +437,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
             ? {
                 ...e,
                 values: { ...e.values, ...values },
+                entryDate,
                 updatedAt: now,
                 editedByManager: user.role !== "employee" ? true : e.editedByManager,
               }
@@ -416,9 +453,11 @@ export function RivetProvider({ children }: { children: ReactNode }) {
         }));
       if (diff.length > 0) {
         logAudit({ actorId: user.id, action: "edited", entity: "Log Entry", entityId: id, departmentId: entry.departmentId, diff });
+        logActivity({ actorId: user.id, action: "edited", entryId: id, moduleKey: entry.moduleKey, departmentId: entry.departmentId });
       }
+      return true;
     },
-    [entries, logAudit, user],
+    [entries, logActivity, logAudit, user],
   );
 
   const decide = useCallback<RivetContextValue["decide"]>(
@@ -438,7 +477,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
                 status: decision,
                 decidedAt: now,
                 decidedById: user.id,
-                managerRemarks: remarks || e.managerRemarks,
+                managerRemarks: remarks?.trim() || undefined,
                 updatedAt: now,
               }
             : e,
@@ -456,10 +495,11 @@ export function RivetProvider({ children }: { children: ReactNode }) {
         });
         logAudit({
           actorId: user.id,
-          action: decision === "approved" ? "approved" : "rejected",
+          action: decision,
           entity: "Log Entry",
           entityId: id,
           departmentId: entry.departmentId,
+          diff: [{ field: "status", from: entry.status, to: decision }, ...(remarks ? [{ field: "managerRemarks", from: "", to: remarks }] : [])],
         });
         setNotifications((prev) => [
           {
@@ -481,7 +521,11 @@ export function RivetProvider({ children }: { children: ReactNode }) {
 
   const addComment = useCallback<RivetContextValue["addComment"]>(
     (entryId, body) => {
-      if (!user) return;
+      const target = entries.find((entry) => entry.id === entryId);
+      if (!user || !target || !canViewEntry(user, target) || !body.trim()) return;
+      const taggedEmails = new Set(Array.from(body.matchAll(/(?:^|\s)@([\w.+-]+@[\w.-]+\.[a-z]{2,})(?=$|[\s.,!?;:)])/gi), (match) => match[1].toLowerCase()));
+      const mentions = users.filter((person) => person.id !== user.id && person.active &&
+        canViewEntry(person, target) && taggedEmails.has(person.email.toLowerCase())).map((person) => person.id);
       const now = new Date().toISOString();
       setEntries((prev) =>
         prev.map((e) =>
@@ -490,7 +534,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
                 ...e,
                 comments: [
                   ...e.comments,
-                  { id: nextId("cm"), authorId: user.id, body, createdAt: now },
+                  { id: nextId("cm"), authorId: user.id, body: body.trim(), createdAt: now, mentions },
                 ],
               }
             : e,
@@ -501,6 +545,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
         logActivity({
           action: "commented",
           actorId: user.id,
+          mentions,
           entryId,
           moduleKey: entry.moduleKey,
           departmentId: entry.departmentId,
@@ -511,18 +556,19 @@ export function RivetProvider({ children }: { children: ReactNode }) {
         
         let recipients: string[] = [];
         if (isAuthor) {
-          recipients = users.filter((u) => u.role === "manager" && u.departmentIds.includes(entry.departmentId)).map(u => u.id);
+          recipients = users.filter((u) => u.role === "manager" && canReviewEntry(u, entry)).map(u => u.id);
         } else {
           recipients = [entry.authorId];
         }
 
+        recipients = [...new Set([...recipients, ...mentions])].filter((id) => id !== user.id && canViewEntry(users.find((person) => person.id === id) ?? null, entry));
         if (recipients.length > 0) {
           setNotifications((prev) => [
             ...recipients.map((id) => ({
               id: nextId("n"),
               kind: "comment" as NotificationKind,
               recipientId: id,
-              title: `New Comment: ${modName}`,
+              title: mentions.includes(id) ? `Mentioned in ${modName}` : `New Comment: ${modName}`,
               body: `${user.name} commented: "${body.substring(0, 30)}${body.length > 30 ? '...' : ''}"`,
               createdAt: now,
               read: false,
@@ -537,8 +583,8 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   );
 
   const markRead = useCallback((id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  }, []);
+    setNotifications((prev) => prev.map((n) => (n.id === id && n.recipientId === user?.id ? { ...n, read: true } : n)));
+  }, [user]);
 
   const markAllRead = useCallback(() => {
     setNotifications((prev) =>
@@ -631,7 +677,8 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   }, [logAudit, user, entries, audit]);
 
   const createModule = useCallback<RivetContextValue["createModule"]>((input) => {
-    const key = input.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const key = input.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!key || seedModules.some((module) => module.key === key)) return;
     const newMod = { ...input, key };
     seedModules.push(newMod);
     setAppModules([...seedModules]);
@@ -649,6 +696,11 @@ export function RivetProvider({ children }: { children: ReactNode }) {
   }, [logAudit, user]);
 
   const value: RivetContextValue = useMemo(() => ({
+    reminderTime,
+    setReminderTime,
+    webinarSuggestions: webinarSuggestions.filter((item) => canModule(user, "create", "webinar-series-planner") || item.authorId === user?.id),
+    suggestWebinar,
+    removeWebinarSuggestion,
     ready,
     user,
     signIn,
@@ -685,7 +737,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     createModule,
     updateModule,
   }), [
-    ready, user, signIn, signOut, entries, campaignList, notifications, activity, audit, 
+    reminderTime, setReminderTime, webinarSuggestions, suggestWebinar, removeWebinarSuggestion, ready, user, signIn, signOut, entries, campaignList, notifications, activity, audit,
     visibleEntries, myEntries, reviewQueue, approvalEntries, myNotifications, unreadCount, 
     submitEntry, createEntry, updateEntryValues, linkEntryToCampaign, decide, addComment, 
     markRead, markAllRead, createCampaign, updateCampaign, appUsers, appDepartments, 

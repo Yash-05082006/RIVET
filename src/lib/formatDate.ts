@@ -1,6 +1,8 @@
 export function formatDate(dateStr: string | undefined | null): string {
   if (!dateStr) return "";
   
+  if (/^\d{4}-\d{2}$/.test(dateStr)) return `01/${dateStr.slice(5)}/${dateStr.slice(0, 4)}`;
+
   // Try to parse as YYYY-MM-DD
   const parts = dateStr.split("T")[0].split("-");
   if (parts.length === 3) {
@@ -38,4 +40,11 @@ export function formatDateTime(dateStr: string | undefined | null): string {
   }
 
   return dateStr;
+}
+
+/** Month-based records overlap any selected day within that month. */
+export function matchesEntryDateRange(entryDate: string, from: string, to: string): boolean {
+  const isMonth = /^\d{4}-\d{2}$/.test(entryDate);
+  return (!from || entryDate >= (isMonth ? from.slice(0, 7) : from)) &&
+    (!to || entryDate <= (isMonth ? to.slice(0, 7) : to));
 }

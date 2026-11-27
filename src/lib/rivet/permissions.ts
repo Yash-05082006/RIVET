@@ -31,7 +31,8 @@ export function hasPermission(user: User | null, perm: GlobalPermission): boolea
 /** Admins span the organisation; everyone else is limited to assigned departments. */
 export function canAccessDepartment(user: User | null, departmentId: string): boolean {
   if (!user || !user.active) return false;
-  return user.role === "admin" || user.departmentIds.includes(departmentId);
+  const department = departments.find((item) => item.id === departmentId);
+  return user.role === "admin" || (!!department && department.active !== false && !department.deleted && user.departmentIds.includes(departmentId));
 }
 
 export function accessibleDepartments(user: User | null) {
@@ -50,25 +51,35 @@ export function canModule(user: User | null, action: ModuleAction, moduleKey: st
   return true;
 }
 
+export function canCreateFor(actor: User | null, author: User | undefined, moduleKey: string): boolean {
+  if (!actor || !author?.active || !canModule(actor, "create", moduleKey)) return false;
+  if (actor.id === author.id) return true;
+  const module = getModule(moduleKey);
+  return !!module?.approvalRequired && module.scope === "employee" && hasPermission(actor, "review") &&
+    author.role === "employee" && author.departmentIds.includes(module.departmentId);
+}
+
 export function accessibleModules(user: User | null): ModuleDef[] {
   return modules.filter((m) => canModule(user, "view", m.key));
 }
 
 export function canViewEntry(user: User | null, entry: LogEntry): boolean {
-  if (!user) return false;
+  if (!user?.active) return false;
   if (entry.authorId === user.id) return true;
-  if (!canAccessDepartment(user, entry.departmentId)) return false;
-  return hasPermission(user, "review");
+  if (entry.status === "draft" && !hasPermission(user, "admin")) return false;
+  if (!canAccessDepartment(user, entry.departmentId) || !canModule(user, "view", entry.moduleKey)) return false;
+  return hasPermission(user, "review") || getModule(entry.moduleKey)?.scope === "department";
 }
 
 export function canReviewEntry(user: User | null, entry: LogEntry): boolean {
   const mod = getModule(entry.moduleKey);
-  return !!mod?.approvalRequired && canModule(user, "review", entry.moduleKey) && canAccessDepartment(user, entry.departmentId);
+  return entry.status !== "draft" && !!mod?.approvalRequired && canModule(user, "review", entry.moduleKey) && canAccessDepartment(user, entry.departmentId);
 }
 
 /** Employees edit their own drafts/rejections; reviewers may correct pending entries. */
 export function canEditEntry(user: User | null, entry: LogEntry): boolean {
   if (!user || !canModule(user, "edit", entry.moduleKey)) return false;
+  if (entry.moduleKey === "webinar-series-planner") return hasPermission(user, "review");
   if (entry.authorId === user.id) return entry.status === "draft" || entry.status === "rejected";
   return entry.status === "submitted" && canReviewEntry(user, entry);
 }
@@ -88,12 +99,17 @@ export function canDecideEntry(
  * Route-level guard used by the /app layout so direct URL access is enforced
  * the same way as navigation visibility.
  */
-export function canAccessPath(user: User | null, pathname: string): boolean {
-  if (!user) return false;
+export function canAccessPath(user: User | null, pathname: string, entries: LogEntry[] = []): boolean {
+  if (!user?.active) return false;
   const path = pathname.replace(/\/+$/, "");
   if (path.startsWith("/app/admin")) return hasPermission(user, "admin");
   if (path.startsWith("/app/approvals")) return hasPermission(user, "review");
   if (path.startsWith("/app/campaigns")) return canAccessDepartment(user, "brand-marketing");
+  const detail = path.match(/^\/app\/modules\/([^/]+)\/entry\/([^/]+)$/);
+  if (detail) {
+    const entry = entries.find((item) => item.id === detail[2] && item.moduleKey === detail[1]);
+    if (entry?.authorId === user.id) return canViewEntry(user, entry);
+  }
   const mod = path.match(/^\/app\/modules\/([^/]+)(\/new)?/);
   if (mod) {
     if (!getModule(mod[1])) return true; // page renders its own "not found"

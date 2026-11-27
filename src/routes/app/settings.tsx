@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCurrentUser } from "../../lib/rivet/store";
+import { hasPermission } from "../../lib/rivet/permissions";
+import { useCurrentUser, useRivet } from "../../lib/rivet/store";
 import { Clock } from "lucide-react";
 import { roleLabel } from "../../lib/rivet/nav";
 
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/app/settings")({
 
 function SettingsPage() {
   const user = useCurrentUser();
+  const { reminderTime, setReminderTime } = useRivet();
 
   return (
     <div className="space-y-8">
@@ -44,11 +46,17 @@ function SettingsPage() {
         </dl>
       </div>
 
+      {!hasPermission(user, "review") && <section className="rounded-lg border border-border bg-background p-5">
+        <label className="text-sm font-medium">Daily submission reminder
+          <input type="time" className="ml-3 rounded border p-1" value={reminderTime} onChange={(event) => setReminderTime(event.target.value)} />
+        </label>
+        <p className="mt-2 text-xs text-muted-foreground">This preference applies while the demo is open.</p>
+      </section>}
       <div className="rounded-lg border border-border bg-background p-8 text-center shadow-sm">
         <Clock className="mx-auto h-7 w-7 text-muted-foreground/40 mb-3" />
-        <p className="text-sm font-medium text-foreground">Preference settings are not yet available</p>
+        <p className="text-sm font-medium text-foreground">Account management</p>
         <p className="mt-1 text-sm text-muted-foreground max-w-xs mx-auto">
-          Notification preferences, password management, and other account settings will be available once the backend is connected.
+          Password management and scheduled email delivery require the production backend.
         </p>
       </div>
     </div>

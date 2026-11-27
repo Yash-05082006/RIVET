@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { canViewEntry } from "../../../../lib/rivet/permissions";
 import { getModule } from "../../../../lib/rivet/demo-data";
 import { useRivet, useCurrentUser } from "../../../../lib/rivet/store";
+import { EntryDiscussion } from "../../../../components/work/EntryDiscussion";
 import { EntryForm } from "../../../../components/work/EntryForm";
 
 export const Route = createFileRoute("/app/modules/$moduleKey/entry/$entryId")({
@@ -18,10 +19,10 @@ function EntryDetailPage() {
   const { moduleKey, entryId } = Route.useParams();
   const { from } = Route.useSearch();
   const user = useCurrentUser();
-  const { entries } = useRivet();
+  const { visibleEntries: entries } = useRivet();
   const mod = getModule(moduleKey);
 
-  const entry = entries.find((e) => e.id === entryId);
+  const entry = entries.find((e) => e.id === entryId && e.moduleKey === moduleKey);
 
   const backLink = from === "work" ? "/app/work" : from === "approvals" ? `/app/approvals/${entryId}` : `/app/modules/${moduleKey}`;
 
@@ -63,7 +64,8 @@ function EntryDetailPage() {
       >
         <ArrowLeft className="h-4 w-4" />
       </Link>
-      <EntryForm moduleDef={mod} existingEntry={entry} />
+      <EntryForm key={entry.id} moduleDef={mod} existingEntry={entry} />
+      <EntryDiscussion key={`discussion-${entry.id}`} entry={entry} />
     </div>
   );
 }

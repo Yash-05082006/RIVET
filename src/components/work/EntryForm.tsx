@@ -10,15 +10,18 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, CalendarDays } from "lucide-react";
 import type { ModuleDef, LogEntry } from "../../lib/rivet/types";
-import { departmentName, campaigns as allCampaigns } from "../../lib/rivet/demo-data";
-import { useRivet, useCurrentUser } from "../../lib/rivet/store";
+import { departmentName } from "../../lib/rivet/demo-data";
+import { hasDuplicateEntry, useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { canCreateIn } from "../../lib/rivet/nav";
-import { canReviewEntry } from "../../lib/rivet/permissions";
+import { canEditEntry, canReviewEntry } from "../../lib/rivet/permissions";
 
 interface EntryFormProps {
   moduleDef: ModuleDef;
   /** Existing entry being edited. Undefined means creating a new entry. */
   existingEntry?: LogEntry;
+  suggestedTopic?: string;
+  onPublished?: () => void;
+  onBehalf?: { id: string; name: string; date: string };
 }
 
 function today(): string {
@@ -43,19 +46,14 @@ function fieldStr(values: Record<string, string | number | boolean>, key: string
   return String(v);
 }
 
-export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
+export function EntryForm({ moduleDef, existingEntry, suggestedTopic, onPublished, onBehalf }: EntryFormProps) {
   const user = useCurrentUser();
-  const { createEntry, updateEntryValues, submitEntry, myEntries, campaigns, linkEntryToCampaign } = useRivet();
+  const { createEntry, updateEntryValues, submitEntry, campaigns, linkEntryToCampaign, visibleEntries } = useRivet();
   const navigate = useNavigate();
 
   const isManagerReviewing = !!existingEntry && existingEntry.status === "submitted" && canReviewEntry(user, existingEntry);
 
-  // Entry is editable iff it is owned by the current user AND in draft or rejected state.
-  const isEditable =
-    !existingEntry ||
-    (existingEntry.status === "draft" && existingEntry.authorId === user.id) ||
-    (existingEntry.status === "rejected" && existingEntry.authorId === user.id) ||
-    isManagerReviewing;
+  const isEditable = !existingEntry || canEditEntry(user, existingEntry);
 
   // Only include user-fillable fields: exclude auto fields (dayOfWeek) and system fields (managerRemarks)
   const editableFields = useMemo(
@@ -71,7 +69,8 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
     // Default the primary date field to today for new entries
     if (!existingEntry) {
       const dateField = editableFields.find((f) => f.type === "date");
-      if (dateField) out[dateField.key] = today();
+      if (dateField) out[dateField.key] = onBehalf?.date ?? today();
+      if (suggestedTopic) out.topic = suggestedTopic;
     }
     return out;
   }, [moduleDef, existingEntry]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -143,6 +142,9 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
       }
     });
 
+    if (primaryDateKey && checkDuplicate(values[primaryDateKey] || existingEntry?.entryDate || today())) {
+      errs[primaryDateKey] = "An entry already exists for this date and record type. Edit the existing entry.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -164,14 +166,16 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
   }
 
   function checkDuplicate(entryDate: string): boolean {
-    if (existingEntry) return false; // editing an existing entry - no duplicate issue
-    return myEntries.some(
-      (e) =>
-        e.moduleKey === moduleDef.key &&
-        e.entryDate === entryDate &&
-        e.authorId === user.id &&
-        e.status !== "rejected"
-    );
+    return hasDuplicateEntry(visibleEntries, {
+      moduleKey: moduleDef.key, authorId: existingEntry?.authorId ?? onBehalf?.id ?? user.id, entryDate, values: buildValues(),
+    }, existingEntry?.id);
+  }
+
+  function saveExisting(entry: LogEntry): boolean {
+    if (updateEntryValues(entry.id, buildValues())) return true;
+    setSubmitError("Changes could not be saved. Check the date and your entry permissions.");
+    setSaving(false);
+    return false;
   }
 
   async function handleSaveChangesOnly() {
@@ -179,7 +183,7 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
     setSaving(true);
     setSubmitError("");
 
-    updateEntryValues(existingEntry.id, buildValues());
+    if (!saveExisting(existingEntry)) return;
     if (existingEntry.campaignId !== (selectedCampaignId || undefined)) {
       linkEntryToCampaign(existingEntry.id, selectedCampaignId || undefined);
     }
@@ -195,22 +199,20 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
     const entryDate = (primaryDateKey ? values[primaryDateKey] : today()) || today();
 
     if (!existingEntry) {
-      const isDup = checkDuplicate(entryDate);
-      if (isDup) {
-        setSubmitError(
-          "An entry already exists for this date in this module. Edit the existing entry instead."
-        );
+      const draftValues = buildValues();
+      if (primaryDateKey) draftValues[primaryDateKey] = entryDate;
+      if (!createEntry({ moduleKey: moduleDef.key, values: draftValues, entryDate, submit: false, campaignId: selectedCampaignId || undefined })) {
+        setSubmitError("The draft could not be saved.");
         setSaving(false);
         return;
       }
-      createEntry({ moduleKey: moduleDef.key, values: buildValues(), entryDate, submit: false, campaignId: selectedCampaignId || undefined });
-      navigate({ to: "/app/work" });
+      navigate(onBehalf ? { to: "/app/dashboard" } : moduleDef.approvalRequired ? { to: "/app/work" } : { to: "/app/modules/$moduleKey", params: { moduleKey: moduleDef.key } });
     } else {
-      updateEntryValues(existingEntry.id, buildValues());
+      if (!saveExisting(existingEntry)) return;
       if (existingEntry.campaignId !== (selectedCampaignId || undefined)) {
         linkEntryToCampaign(existingEntry.id, selectedCampaignId || undefined);
       }
-      navigate({ to: "/app/work" });
+      navigate(onBehalf ? { to: "/app/dashboard" } : moduleDef.approvalRequired ? { to: "/app/work" } : { to: "/app/modules/$moduleKey", params: { moduleKey: moduleDef.key } });
     }
     setSaving(false);
   }
@@ -223,24 +225,22 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
     const entryDate = (primaryDateKey ? values[primaryDateKey] : today()) || today();
 
     if (!existingEntry) {
-      const isDup = checkDuplicate(entryDate);
-      if (isDup) {
-        setSubmitError(
-          "An entry already exists for this date in this module. Edit the existing entry instead."
-        );
+      const id = createEntry({ moduleKey: moduleDef.key, values: buildValues(), entryDate, submit: true, authorId: onBehalf?.id, campaignId: selectedCampaignId || undefined });
+      if (!id) {
+        setSubmitError("The entry could not be saved.");
         setSaving(false);
         return;
       }
-      createEntry({ moduleKey: moduleDef.key, values: buildValues(), entryDate, submit: true, campaignId: selectedCampaignId || undefined });
-      navigate({ to: "/app/work" });
+      onPublished?.();
+      navigate(onBehalf ? { to: "/app/dashboard" } : moduleDef.approvalRequired ? { to: "/app/work" } : { to: "/app/modules/$moduleKey", params: { moduleKey: moduleDef.key } });
     } else {
       // Update values then submit (covers both draft submit and resubmit after rejection)
-      updateEntryValues(existingEntry.id, buildValues());
+      if (!saveExisting(existingEntry)) return;
       if (existingEntry.campaignId !== (selectedCampaignId || undefined)) {
         linkEntryToCampaign(existingEntry.id, selectedCampaignId || undefined);
       }
-      submitEntry(existingEntry.id);
-      navigate({ to: "/app/work" });
+      if (moduleDef.approvalRequired) submitEntry(existingEntry.id);
+      navigate(onBehalf ? { to: "/app/dashboard" } : moduleDef.approvalRequired ? { to: "/app/work" } : { to: "/app/modules/$moduleKey", params: { moduleKey: moduleDef.key } });
     }
     setSaving(false);
   }
@@ -252,7 +252,7 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
   }
 
   const canCreate = canCreateIn(user, moduleDef.key);
-  const isViewOnly = !isEditable || !canCreate;
+  const isViewOnly = !isEditable || (!existingEntry && !canCreate);
 
   return (
     <div className="space-y-6">
@@ -490,21 +490,21 @@ export function EntryForm({ moduleDef, existingEntry }: EntryFormProps) {
             </button>
           ) : (
             <>
-              <button
+              {moduleDef.approvalRequired && !onBehalf && <button
                 type="button"
                 disabled={saving}
                 onClick={handleSaveDraft}
                 className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface disabled:opacity-50"
               >
                 Save Draft
-              </button>
+              </button>}
               <button
                 type="button"
                 disabled={saving}
                 onClick={handleSubmit}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-50"
               >
-                {existingEntry?.status === "rejected" ? "Resubmit for Review" : "Submit for Review"}
+                {!moduleDef.approvalRequired ? "Save Changes" : existingEntry?.status === "rejected" ? "Resubmit for Review" : "Submit for Review"}
               </button>
             </>
           )}

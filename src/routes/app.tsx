@@ -42,7 +42,7 @@ function getNavIcon(label: string) {
 }
 
 function AppLayout() {
-  const { user, ready, signOut, unreadCount, reviewQueue } = useRivet();
+  const { user, ready, signOut, unreadCount, reviewQueue, visibleEntries, modules, departments } = useRivet();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,11 +52,11 @@ function AppLayout() {
   // Stabilise these so they don't recompute (or mutate) on every keystroke/state update
   const navSections = useMemo(
     () => (user ? sectionsForUser(user) : []),
-    [user]
+    [user, modules, departments]
   );
   const allowed = useMemo(
-    () => canAccessPath(user, location.pathname),
-    [user, location.pathname]
+    () => canAccessPath(user, location.pathname, visibleEntries),
+    [user, location.pathname, visibleEntries, modules, departments]
   );
 
   useEffect(() => {

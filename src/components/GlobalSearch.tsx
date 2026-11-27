@@ -2,12 +2,12 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, FileText, LayoutGrid, Users, Megaphone } from "lucide-react";
 import { useRivet } from "../lib/rivet/store";
-import { canModule, accessibleDepartments, accessibleModules } from "../lib/rivet/permissions";
-import { getModule } from "../lib/rivet/demo-data";
+import { canAccessDepartment, canReviewEntry, accessibleModules } from "../lib/rivet/permissions";
+import { getModule, moduleName } from "../lib/rivet/demo-data";
 import { formatDateTime } from "../lib/formatDate";
 
 export function GlobalSearch() {
-  const { entries, campaigns, user, users } = useRivet();
+  const { visibleEntries, campaigns, user, users } = useRivet();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -19,8 +19,19 @@ export function GlobalSearch() {
         setIsOpen(false);
       }
     }
+    function handleShortcut(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        containerRef.current?.querySelector("input")?.focus();
+      }
+      if (event.key === "Escape") setIsOpen(false);
+    }
+    document.addEventListener("keydown", handleShortcut);
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleShortcut);
+    };
   }, []);
 
   const searchResults = useMemo(() => {
@@ -35,22 +46,6 @@ export function GlobalSearch() {
       icon: any;
       linkParams?: any;
     }> = [];
-
-    // Search Users
-    users.forEach((u) => {
-      const isVisible = user.role === "admin" || 
-                        user.id === u.id || 
-                        user.departmentIds.some(d => u.departmentIds.includes(d));
-      if (isVisible && (u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term) || u.designation.toLowerCase().includes(term))) {
-        results.push({
-          id: u.id,
-          type: "user",
-          title: u.name,
-          subtitle: `${u.designation} • ${u.email}`,
-          icon: Users,
-        });
-      }
-    });
 
     // Search Modules
     const permittedModules = accessibleModules(user);
@@ -67,7 +62,7 @@ export function GlobalSearch() {
     });
 
     // Search Campaigns
-    if (user.role === "admin" || user.departmentIds.includes("brand-marketing")) {
+    if (canAccessDepartment(user, "brand-marketing")) {
       campaigns.forEach((c) => {
         if (c.name.toLowerCase().includes(term) || c.description.toLowerCase().includes(term)) {
           results.push({
@@ -81,22 +76,12 @@ export function GlobalSearch() {
       });
     }
 
-    // Search Entries
-    const visibleEntries = entries.filter((e) => {
-      if (user.role === "admin") return true;
-      if (user.role === "manager") return user.departmentIds.includes(e.departmentId) && e.status !== "draft";
-      if (e.authorId === user.id) return true;
-      const mod = getModule(e.moduleKey);
-      if (mod?.scope === "department" && user.departmentIds.includes(e.departmentId) && e.status !== "draft") return true;
-      return false;
-    });
-
     visibleEntries.forEach((e) => {
       let matches = false;
       const author = users.find(u => u.id === e.authorId);
       if (author && author.name.toLowerCase().includes(term)) matches = true;
       
-      if (e.entryDate.includes(term)) matches = true;
+      if (e.entryDate.includes(term) || moduleName(e.moduleKey).toLowerCase().includes(term)) matches = true;
       
       if (!matches) {
         for (const [k, v] of Object.entries(e.values)) {
@@ -107,9 +92,9 @@ export function GlobalSearch() {
         }
       }
 
-      if (matches) {
+      if (matches || e.comments.some((comment) => comment.body.toLowerCase().includes(term))) {
         const modName = getModule(e.moduleKey)?.name ?? "Entry";
-        const isReviewer = (user.role === "admin" || user.role === "manager") && e.authorId !== user.id;
+        const isReviewer = canReviewEntry(user, e) && e.authorId !== user.id;
         
         results.push({
           id: e.id,
@@ -123,7 +108,7 @@ export function GlobalSearch() {
     });
 
     return results.slice(0, 10);
-  }, [query, user, users, entries, campaigns]);
+  }, [query, user, users, visibleEntries, campaigns]);
 
   return (
     <div className="relative flex-1 max-w-md" ref={containerRef}>
@@ -131,7 +116,7 @@ export function GlobalSearch() {
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search entries, modules, people..."
+          placeholder="Search entries, modules, campaigns..."
           className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-4 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           value={query}
           onChange={(e) => {

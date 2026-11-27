@@ -1,17 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { getModule } from "../../../../lib/rivet/demo-data";
-import { useCurrentUser } from "../../../../lib/rivet/store";
+import { useCurrentUser, useRivet } from "../../../../lib/rivet/store";
+import { canCreateFor } from "../../../../lib/rivet/permissions";
 import { canCreateIn } from "../../../../lib/rivet/nav";
 import { EntryForm } from "../../../../components/work/EntryForm";
 
 export const Route = createFileRoute("/app/modules/$moduleKey/new")({
+  validateSearch: (search: Record<string, unknown>): { suggestion?: string; author?: string; date?: string } => ({
+    suggestion: typeof search.suggestion === "string" ? search.suggestion : undefined,
+    author: typeof search.author === "string" ? search.author : undefined,
+    date: typeof search.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search.date) ? search.date : undefined,
+  }),
   component: NewEntryPage,
 });
 
 function NewEntryPage() {
   const { moduleKey } = Route.useParams();
   const user = useCurrentUser();
+  const { suggestion, author, date } = Route.useSearch();
+  const { webinarSuggestions, removeWebinarSuggestion, users } = useRivet();
+  const proposal = moduleKey === "webinar-series-planner" ? webinarSuggestions.find((item) => item.id === suggestion) : undefined;
   const mod = getModule(moduleKey);
 
   if (!mod) {
@@ -25,7 +34,9 @@ function NewEntryPage() {
     );
   }
 
-  if (!canCreateIn(user, moduleKey)) {
+  const target = author ? users.find((person) => person.id === author) : undefined;
+  const onBehalf = target && date && canCreateFor(user, target, moduleKey) ? { id: target.id, name: target.name, date } : undefined;
+  if (!canCreateIn(user, moduleKey) || (author && !onBehalf)) {
     return (
       <div className="space-y-4">
         <Link
@@ -51,7 +62,8 @@ function NewEntryPage() {
       >
         <ArrowLeft className="h-4 w-4" />
       </Link>
-      <EntryForm moduleDef={mod} />
+      {onBehalf && <p className="text-sm text-muted-foreground">Creating on behalf of {onBehalf.name}</p>}
+      <EntryForm moduleDef={mod} onBehalf={onBehalf} suggestedTopic={proposal?.topic} onPublished={proposal ? () => removeWebinarSuggestion(proposal.id) : undefined} />
     </div>
   );
 }

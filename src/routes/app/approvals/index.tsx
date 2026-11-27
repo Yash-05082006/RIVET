@@ -5,7 +5,7 @@ import { Button } from "../../../components/ui/button";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
 import { getModule, moduleName, departmentName } from "../../../lib/rivet/demo-data";
 import { accessibleDepartments, hasPermission } from "../../../lib/rivet/permissions";
-import { formatDate, formatDateTime } from "../../../lib/formatDate";
+import { formatDate, formatDateTime, matchesEntryDateRange } from "../../../lib/formatDate";
 import type { LogEntry } from "../../../lib/rivet/types";
 
 export const Route = createFileRoute("/app/approvals/")({
@@ -56,6 +56,8 @@ function ApprovalsPage() {
   const [bulkRemark, setBulkRemark] = useState("");
   const [showBulkReject, setShowBulkReject] = useState(false);
   const [bulkError, setBulkError] = useState("");
+  const [decisionTarget, setDecisionTarget] = useState<{ id: string; decision: "approved" | "rejected" }>();
+  const [rowRemark, setRowRemark] = useState("");
 
   const scopedDepartmentIds = new Set(userDepartments.map((department) => department.id));
   const filtered = useMemo(() => approvalEntries.filter((entry) => {
@@ -63,8 +65,7 @@ function ApprovalsPage() {
     if (departmentFilter !== "all" && entry.departmentId !== departmentFilter) return false;
     if (moduleFilter !== "all" && entry.moduleKey !== moduleFilter) return false;
     if (statusFilter !== "all" && entry.status !== statusFilter) return false;
-    if (dateFrom && entry.entryDate < dateFrom) return false;
-    if (dateTo && entry.entryDate > dateTo) return false;
+    if (!matchesEntryDateRange(entry.entryDate, dateFrom, dateTo)) return false;
     return true;
   }), [approvalEntries, departmentFilter, moduleFilter, statusFilter, dateFrom, dateTo]);
 
@@ -140,6 +141,18 @@ function ApprovalsPage() {
         <span className="ml-auto pb-2 text-sm text-muted-foreground">{filtered.length} submission{filtered.length === 1 ? "" : "s"}</span>
       </div>
 
+      {decisionTarget && <form className="flex flex-wrap items-end gap-2 rounded-md border p-3" onSubmit={(event) => {
+        event.preventDefault();
+        if (decisionTarget.decision === "rejected" && !rowRemark.trim()) return;
+        decide([decisionTarget.id], decisionTarget.decision, rowRemark.trim() || undefined);
+        setDecisionTarget(undefined);
+      }}>
+        <label className="grid gap-1 text-sm">Manager remarks
+          <input className="rounded border px-2 py-1" value={rowRemark} onChange={(event) => setRowRemark(event.target.value)} required={decisionTarget.decision === "rejected"} />
+        </label>
+        <Button size="sm">Confirm {decisionTarget.decision === "approved" ? "approval" : "rejection"}</Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => setDecisionTarget(undefined)}>Cancel</Button>
+      </form>}
       {view === "list" ? <>
         {pendingSelected.length > 0 && <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
           <span className="mr-2 text-sm font-medium text-foreground">{pendingSelected.length} pending selected</span>
@@ -166,7 +179,10 @@ function ApprovalsPage() {
                 <td className="px-4 py-3"><input type="checkbox" aria-label={`Select ${authorName(entry)} submission`} disabled={entry.status !== "submitted"} checked={selectedIds.includes(entry.id)} onChange={() => toggleEntry(entry.id)} /></td>
                 <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">{authorName(entry)}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{departmentName(entry.departmentId)}</td><td className="px-4 py-3 text-muted-foreground">{moduleName(entry.moduleKey)}</td><td className="whitespace-nowrap px-4 py-3">{formatDate(entry.entryDate)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{entry.submittedAt ? <span className="inline-flex items-center gap-1.5"><Clock className="h-3 w-3" />{formatDateTime(entry.submittedAt)}</span> : "—"}</td><td className="px-4 py-3"><StatusLabel status={entry.status as ApprovalStatus} /></td>
-                <td className="whitespace-nowrap px-4 py-3 text-right"><Link to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover">{entry.status === "submitted" ? "Review" : "View"}<ArrowRight className="h-3.5 w-3.5" /></Link></td>
+                <td className="space-x-2 whitespace-nowrap px-4 py-3 text-right">{entry.status === "submitted" && <>
+                  <Button size="sm" variant="outline" onClick={() => { setRowRemark(""); setDecisionTarget({ id: entry.id, decision: "approved" }); }}>Approve</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setRowRemark(""); setDecisionTarget({ id: entry.id, decision: "rejected" }); }}>Reject</Button>
+                </>}<Link to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover">{entry.status === "submitted" ? "Review" : "View"}<ArrowRight className="h-3.5 w-3.5" /></Link></td>
               </tr>) : <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">No submissions match these filters.</td></tr>}
             </tbody>
           </table>
@@ -174,11 +190,18 @@ function ApprovalsPage() {
       </> : <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-3">
         {(["submitted", "approved", "rejected"] as const).map((status) => {
           const items = filtered.filter((entry) => entry.status === status);
-          return <section key={status} aria-label={`${statusLabels[status]} submissions`} className="min-w-0">
+          return <section key={status} onDragOver={(event) => { if (status !== "submitted") event.preventDefault(); }} onDrop={(event) => {
+            event.preventDefault();
+            const id = event.dataTransfer.getData("text/plain");
+            if (status === "submitted" || !filtered.some((entry) => entry.id === id && entry.status === "submitted")) return;
+            setRowRemark("");
+            setDecisionTarget({ id, decision: status });
+          }} aria-label={`${statusLabels[status]} submissions`} className="min-w-0">
             <div className="mb-3 flex items-center justify-between border-b border-border pb-3"><h2 className="text-sm font-semibold text-foreground">{statusLabels[status]}</h2><span className="text-xs text-muted-foreground">{items.length}</span></div>
-            <div className="space-y-3">{items.map((entry) => <Link key={entry.id} to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="block rounded-md border border-border bg-background p-4 transition-colors hover:bg-surface">
+            <div className="space-y-3">{items.map((entry) => <Link key={entry.id} draggable={entry.status === "submitted"} onDragStart={(event) => { if (entry.status === "submitted") event.dataTransfer.setData("text/plain", entry.id); }} to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="block rounded-md border border-border bg-background p-4 transition-colors hover:bg-surface">
               <div className="mb-3 flex items-start justify-between gap-2"><span className="font-medium text-foreground">{authorName(entry)}</span><StatusLabel status={entry.status} /></div>
               <p className="text-sm text-muted-foreground">{departmentName(entry.departmentId)} · {moduleName(entry.moduleKey)}</p>
+              <p className="mt-2 line-clamp-2 text-sm">{String(Object.values(entry.values)[1] ?? "")}</p>
               <p className="mt-2 text-xs text-muted-foreground">Entry {formatDate(entry.entryDate)} · Submitted {entry.submittedAt ? formatDateTime(entry.submittedAt) : "—"}</p>
             </Link>)}{items.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No submissions</p>}</div>
           </section>;

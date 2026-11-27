@@ -22,7 +22,7 @@ function ModulesAdminPage() {
     departmentId: "",
     cadence: "daily",
     createRoles: ["employee", "manager", "admin"],
-    scope: "department",
+    scope: "employee",
     active: true,
     fields: [],
   });
@@ -35,10 +35,10 @@ function ModulesAdminPage() {
     setFormData({
       name: "",
       description: "",
-      departmentId: departments[0]?.id || "",
+      departmentId: departments.find((department) => department.active !== false && !department.deleted)?.id ?? "",
       cadence: "daily",
       createRoles: ["employee", "manager", "admin"],
-      scope: "department",
+      scope: "employee",
       active: true,
       fields: [
         { key: "field1", label: "Example Field", type: "text", required: true },
@@ -58,7 +58,9 @@ function ModulesAdminPage() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.name?.trim()) newErrors.name = "Required";
+    const key = formData.name?.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!key) newErrors.name = "Enter a name with letters or numbers.";
+    else if (!isEditing && modules.some((module) => module.key === key)) newErrors.name = "A module with this name already exists.";
     if (!formData.description?.trim()) newErrors.description = "Required";
     if (!formData.departmentId) newErrors.departmentId = "Required";
     
@@ -77,9 +79,12 @@ function ModulesAdminPage() {
     if (isEditing) {
       updateModule(editingKey, formData as ModuleDef);
     } else {
-      const newKey = formData.name!.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const fields = formData.fields!;
       createModule({
         ...(formData as Omit<ModuleDef, "key">),
+        reference: "",
+        approvalRequired: formData.approvalRequired ?? true,
+        tableFields: fields.map((field) => field.key),
       });
     }
     setIsOpen(false);
@@ -201,6 +206,7 @@ function ModulesAdminPage() {
                 <div className="space-y-2 col-span-2">
                   <label className="text-sm font-medium">Module Name</label>
                   <input
+                    aria-label="Module name"
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -212,6 +218,7 @@ function ModulesAdminPage() {
                 <div className="space-y-2 col-span-2">
                   <label className="text-sm font-medium">Description</label>
                   <input
+                    aria-label="Module description"
                     value={formData.description}
                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -265,7 +272,7 @@ function ModulesAdminPage() {
                   >
                     <option value="personal">Personal (Own data only)</option>
                     <option value="department">Department (Visible to entire dept)</option>
-                    <option value="global">Global (Visible to all active users)</option>
+                    <option value="employee">Employee (Personal records)</option>
                   </select>
                 </div>
 

@@ -1,364 +1,195 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Calendar, Users, BarChart, FileText, CheckCircle } from "lucide-react";
-import { useRivet, useCurrentUser } from "../../lib/rivet/store";
-import { useState, useMemo, useEffect } from "react";
-import { accessibleDepartments, accessibleModules } from "../../lib/rivet/permissions";
-import { getModule, webinarSeries } from "../../lib/rivet/demo-data";
-import { formatDate } from "../../lib/formatDate";
+import { BarChart, Calendar, Download, FileText, Users } from "lucide-react";
+import { useState } from "react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useRivet, useCurrentUser } from "../../lib/rivet/store";
+import { accessibleDepartments, canModule, hasPermission } from "../../lib/rivet/permissions";
+import { getModule } from "../../lib/rivet/demo-data";
+import { formatDate, matchesEntryDateRange } from "../../lib/formatDate";
 import mainLogo from "../../../assets/RIVET_main_logo_removebg.png";
+import type { LogEntry } from "../../lib/rivet/types";
 
-export const Route = createFileRoute("/app/reports")({
-  component: ReportsPage,
-});
+export const Route = createFileRoute("/app/reports")({ component: ReportsPage });
+
+const reports = {
+  monthly: "Monthly Department Report",
+  employee: "Individual Employee Report",
+  meeting: "Weekly Meeting Summary",
+  calendar: "52 Week Webinar Calendar",
+  export: "Full Data Export",
+};
+
+const reportIcons = { monthly: BarChart, employee: Users, meeting: FileText, calendar: Calendar, export: Download };
+
+const meetingFields = ["physicalMeetings", "onlineMeetings", "calls", "serviceCalls", "serviceMeetings"];
+const calendarFields = ["seriesNumber", "scheduledDate", "topic", "speaker", "speakerDesignation", "mode", "status", "notes"];
+
+type Cell = string | number | boolean;
+interface ReportSheet {
+  name: string;
+  columns: string[];
+  rows: Cell[][];
+}
 
 function ReportsPage() {
-  const { entries, users, departments } = useRivet();
+  const { visibleEntries, users, departments } = useRivet();
   const user = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<"monthly" | "employee" | "meeting" | "calendar" | "export">("monthly");
-  
-  const myDepts = accessibleDepartments(user);
-  const [selectedDept, setSelectedDept] = useState(myDepts[0]?.id || "");
-  const [selectedUser, setSelectedUser] = useState(user.id);
-
-  // Load logo once for PDFs
-  const loadLogo = (): Promise<HTMLImageElement> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(img); // Resolve anyway to avoid breaking Promise chain
-      img.src = mainLogo;
-    });
+  const reviewer = hasPermission(user, "review");
+  const admin = hasPermission(user, "admin");
+  const allowed = {
+    monthly: reviewer,
+    employee: true,
+    meeting: reviewer && canModule(user, "view", "weekly-meeting-report"),
+    calendar: canModule(user, "view", "webinar-series-planner"),
+    export: admin,
   };
+  const [tab, setTab] = useState<keyof typeof reports>(reviewer ? "monthly" : "employee");
+  const activeTab = allowed[tab] ? tab : "employee";
+  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [departmentId, setDepartmentId] = useState("");
+  const [employeeId, setEmployeeId] = useState(user.id);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const scope = accessibleDepartments(user);
+  const selectedDepartment = scope.find((department) => department.id === departmentId) ?? scope[0];
+  const submitted = visibleEntries.filter((entry) => entry.status !== "draft");
+  const employees = reviewer
+    ? users.filter((person) => person.id === user.id || person.departmentIds.some((id) => scope.some((department) => department.id === id)) || submitted.some((entry) => entry.authorId === person.id))
+    : [user];
+  const selectedEmployee = employees.find((person) => person.id === employeeId) ?? user;
+  const exportable = activeTab !== "employee" || !from || !to || from <= to;
 
-  // 1. Monthly Department Report
-  const exportMonthlyPDF = async () => {
-    try {
-      const doc = new jsPDF();
-      const img = await loadLogo();
-      const deptName = departments.find(d => d.id === selectedDept)?.name || "Unknown Department";
-      
-      const deptEntries = entries.filter(e => e.departmentId === selectedDept && e.status !== "draft");
-      const modCounts: Record<string, number> = {};
-      deptEntries.forEach(e => {
-        modCounts[e.moduleKey] = (modCounts[e.moduleKey] || 0) + 1;
-      });
-
-      const tableData = Object.entries(modCounts).map(([key, count]) => {
-        return [getModule(key)?.name || key, count.toString()];
-      });
-      
-      if (tableData.length === 0) {
-        tableData.push(["No data available for this period", ""]);
-      }
-
-      const generatedDate = formatDate(new Date().toISOString());
-
-      autoTable(doc, {
-        head: [["Module", "Entries"]],
-        body: tableData,
-        startY: 50,
-        margin: { top: 50 },
-        didDrawPage: (data: any) => {
-          if (img.complete && img.naturalWidth > 0) {
-            doc.addImage(img, 'PNG', 14, 10, 32, 16);
-          }
-          
-          doc.setFontSize(16);
-          doc.setTextColor(20);
-          doc.text(`Monthly Department Report`, 14, 36);
-          
-          doc.setFontSize(10);
-          doc.setTextColor(100);
-          doc.text(`Department: ${deptName}  |  Generated: ${generatedDate}`, 14, 43);
-        }
-      });
-      
-      doc.save(`monthly-report-${selectedDept}.pdf`);
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("Failed to generate PDF. See console for details.");
-    }
-  };
-
-  // 2. Individual Employee Report
-  const exportEmployeeExcel = () => {
-    const targetUserId = user.role === "employee" ? user.id : selectedUser;
-    const empEntries = entries.filter(e => e.authorId === targetUserId && e.status !== "draft");
-    const targetUser = users.find(u => u.id === targetUserId);
-    
-    let data: any[] = empEntries.map(e => {
-      const mod = getModule(e.moduleKey);
+  function moduleSheets(records: LogEntry[]): ReportSheet[] {
+    return [...new Set(records.map((entry) => entry.moduleKey))].map((key) => {
+      const mod = getModule(key);
+      const moduleEntries = records.filter((entry) => entry.moduleKey === key);
+      const fields = [...new Set([...(mod?.fields.map((field) => field.key) ?? []), ...moduleEntries.flatMap((entry) => Object.keys(entry.values))])];
       return {
-        "Entry ID": e.id,
-        "Module Name": mod?.name || e.moduleKey,
-        "Date": formatDate(e.entryDate),
-        "Status": e.status,
-        ...e.values
+        name: mod?.name ?? key,
+        columns: ["Entry ID", "Employee", "Department", "Entry Date", "Approval Status", ...fields.map((field) => mod?.fields.find((item) => item.key === field)?.label ?? field)],
+        rows: moduleEntries.map((entry) => [
+          entry.id, users.find((person) => person.id === entry.authorId)?.name ?? entry.authorId,
+          departments.find((department) => department.id === entry.departmentId)?.name ?? entry.departmentId,
+          formatDate(entry.entryDate), entry.status,
+          ...fields.map((field) => mod?.fields.find((item) => item.key === field)?.type === "date"
+            ? formatDate(String(entry.values[field] ?? "")) : entry.values[field] ?? ""),
+        ]),
       };
     });
-    
-    if (data.length === 0) {
-      data = [{ "Entry ID": "No data found for this employee", "Module Name": "", "Date": "", "Status": "" }];
+  }
+
+  let sheets: ReportSheet[];
+  switch (activeTab) {
+    case "monthly":
+      sheets = moduleSheets(month ? submitted.filter((entry) => entry.departmentId === selectedDepartment?.id && entry.entryDate.startsWith(month)) : []);
+      break;
+    case "employee":
+      sheets = moduleSheets(exportable ? submitted.filter((entry) => entry.authorId === selectedEmployee.id &&
+        matchesEntryDateRange(entry.entryDate, from, to)) : []);
+      break;
+    case "meeting":
+      sheets = [{
+        name: "Weekly Meeting Summary",
+        columns: ["Week Ending Date", "Employee", "Physical Meetings", "Online Meetings", "Calls", "Service Calls", "Service Meetings"],
+        rows: submitted.filter((entry) => entry.moduleKey === "weekly-meeting-report" && !!month && entry.entryDate.startsWith(month))
+          .sort((a, b) => a.entryDate.localeCompare(b.entryDate))
+          .map((entry) => [formatDate(entry.entryDate), users.find((person) => person.id === entry.authorId)?.name ?? entry.authorId,
+            ...meetingFields.map((field) => Number(entry.values[field]) || 0)]),
+      }];
+      break;
+    case "calendar":
+      sheets = [{
+        name: "Webinar Calendar",
+        columns: calendarFields.map((field) => getModule("webinar-series-planner")?.fields.find((item) => item.key === field)?.label ?? field),
+        rows: submitted.filter((entry) => entry.moduleKey === "webinar-series-planner")
+          .sort((a, b) => a.entryDate.localeCompare(b.entryDate))
+          .map((entry) => calendarFields.map((field) => field === "scheduledDate" ? formatDate(entry.entryDate) : entry.values[field] ?? "")),
+      }];
+      break;
+    case "export":
+      sheets = moduleSheets(visibleEntries);
+      break;
+  }
+  const hasRows = sheets.some((sheet) => sheet.rows.length > 0);
+
+  function downloadExcel() {
+    const workbook = XLSX.utils.book_new();
+    for (const sheet of sheets) {
+      const name = sheet.name.replace(/[\[\]:*?/\\]/g, "-").slice(0, 28) || "Report";
+      const unique = workbook.SheetNames.includes(name) ? `${name.slice(0, 24)}-${workbook.SheetNames.length}` : name;
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([sheet.columns, ...sheet.rows]), unique);
     }
-    
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Employee Data");
-    XLSX.writeFile(wb, `employee-report-${targetUser?.name.replace(/\s+/g, '-') || 'unknown'}.xlsx`);
-  };
+    XLSX.writeFile(workbook, `${activeTab}-report.xlsx`);
+  }
 
-  // 3. Weekly Meeting Summary
-  const exportMeetingSummary = async () => {
-    try {
-      const doc = new jsPDF();
-      const img = await loadLogo();
-      
-      const meetingEntries = entries.filter(e => e.moduleKey === "weekly-meeting-report" && e.status !== "draft");
-      let tableData = meetingEntries.map(e => {
-        const outcomes = typeof e.values["key-outcomes"] === "string" 
-          ? e.values["key-outcomes"].replace(/—/g, '-').replace(/–/g, '-') 
-          : "";
-          
-        return [
-          formatDate(e.entryDate),
-          users.find(u => u.id === e.authorId)?.name || "Unknown",
-          e.values["meeting-type"] || "General",
-          outcomes
-        ];
-      });
-
-      if (tableData.length === 0) {
-        tableData = [["No data available", "", "", ""]];
-      }
-
-      const generatedDate = formatDate(new Date().toISOString());
-
-      autoTable(doc, {
-        head: [["Date", "Submitted By", "Type", "Outcomes"]],
-        body: tableData,
-        startY: 50,
-        margin: { top: 50 },
-        styles: { overflow: 'linebreak', cellWidth: 'wrap' },
-        columnStyles: { 3: { cellWidth: 80 } },
-        didDrawPage: (data: any) => {
-          if (img.complete && img.naturalWidth > 0) {
-            doc.addImage(img, 'PNG', 14, 10, 32, 16);
-          }
-          
-          doc.setFontSize(16);
-          doc.setTextColor(20);
-          doc.text("Weekly Meeting Summary", 14, 36);
-          
-          doc.setFontSize(10);
-          doc.text(`Generated: ${generatedDate}`, 14, 43);
-        }
-      });
-      
-      doc.save(`meeting-summary.pdf`);
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("Failed to generate PDF. See console for details.");
-    }
-  };
-
-  // 4. 52 Week Calendar
-  const exportCalendarExcel = () => {
-    let data: any[] = webinarSeries.map(w => ({
-      "Series Number": w.seriesNumber,
-      "Date": formatDate(w.scheduledDate),
-      "Topic": w.topic,
-      "Speaker": w.speaker,
-      "Designation": w.speakerDesignation,
-      "Mode": w.mode,
-      "Status": w.status,
-      "Notes": w.notes || ""
-    }));
-
-    if (data.length === 0) {
-      data = [{ "Series Number": "No data available", "Date": "", "Topic": "", "Speaker": "", "Designation": "", "Mode": "", "Status": "", "Notes": "" }];
-    }
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Webinar Calendar");
-    XLSX.writeFile(wb, "52-week-calendar.xlsx");
-  };
-
-  // 5. Full Data Export
-  const exportFullData = () => {
-    const wb = XLSX.utils.book_new();
-    const mods = accessibleModules(user);
-    let sheetCount = 0;
-
-    mods.forEach(mod => {
-      const modEntries = entries.filter(e => e.moduleKey === mod.key);
-      let data: any[] = modEntries.map(e => ({
-        "Entry ID": e.id,
-        "Date": formatDate(e.entryDate),
-        "Author": users.find(u => u.id === e.authorId)?.name || "Unknown",
-        "Department": departments.find(d => d.id === e.departmentId)?.name || "Unknown",
-        "Status": e.status,
-        ...e.values
-      }));
-      
-      if (data.length === 0) {
-        data = [{ "Entry ID": "No data found for module", "Date": "", "Author": "", "Department": "", "Status": "" }];
-      }
-      
-      const ws = XLSX.utils.json_to_sheet(data);
-      XLSX.utils.book_append_sheet(wb, ws, mod.name.substring(0, 31));
-      sheetCount++;
+  async function downloadPDF() {
+    const logo = await new Promise<HTMLImageElement | undefined>((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => resolve(undefined);
+      image.src = mainLogo;
     });
-
-    if (sheetCount === 0) {
-      const ws = XLSX.utils.json_to_sheet([{ "Note": "No modules accessible" }]);
-      XLSX.utils.book_append_sheet(wb, ws, "Empty Export");
-    }
-    
-    XLSX.writeFile(wb, "full-data-export.xlsx");
-  };
-
-  // UI rendering details
-  const renderContent = () => {
-    switch (activeTab) {
-      case "monthly":
-        return (
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">Monthly Department Report</h2>
-            <p className="text-sm text-muted-foreground">Department-scoped monthly summary.</p>
-            {myDepts.length > 0 ? (
-              <div className="flex items-center gap-4">
-                <select 
-                  className="rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
-                  value={selectedDept}
-                  onChange={(e) => setSelectedDept(e.target.value)}
-                >
-                  {myDepts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-                <button onClick={exportMonthlyPDF} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                  <Download className="h-4 w-4" /> Export PDF
-                </button>
-              </div>
-            ) : (
-              <p className="text-sm text-red-500">You do not have access to any departments.</p>
-            )}
-          </div>
-        );
-      case "employee":
-        const deptUsers = user.role === "admin" 
-          ? users 
-          : user.role === "manager"
-          ? users.filter(u => u.departmentIds.some(d => user.departmentIds.includes(d)))
-          : [];
-
-        return (
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">Individual Employee Report</h2>
-            <p className="text-sm text-muted-foreground">Export work data for a specific employee.</p>
-            <div className="flex items-center gap-4">
-              {user.role === "employee" ? (
-                <div className="text-sm font-medium border border-input rounded-md px-3 py-2 bg-muted/50 text-muted-foreground">
-                  {user.name} (You)
-                </div>
-              ) : (
-                <select 
-                  className="rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
-                  value={selectedUser}
-                  onChange={(e) => setSelectedUser(e.target.value)}
-                >
-                  {deptUsers.map(u => <option key={u.id} value={u.id}>{u.name} ({u.designation})</option>)}
-                </select>
-              )}
-              <button onClick={exportEmployeeExcel} className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-                <Download className="h-4 w-4" /> Export Excel
-              </button>
-            </div>
-          </div>
-        );
-      case "meeting":
-        return (
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">Weekly Meeting Summary</h2>
-            <p className="text-sm text-muted-foreground">Generate a PDF summary of the Weekly Meeting Report data.</p>
-            <button onClick={exportMeetingSummary} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-              <Download className="h-4 w-4" /> Export PDF
-            </button>
-          </div>
-        );
-      case "calendar":
-        return (
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">52 Week Webinar Calendar</h2>
-            <p className="text-sm text-muted-foreground">Export the webinar series schedule as an Excel document.</p>
-            <button onClick={exportCalendarExcel} className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-              <Download className="h-4 w-4" /> Export Excel
-            </button>
-          </div>
-        );
-      case "export":
-        if (user.role !== "admin") return <p className="text-sm text-red-500">Admins only.</p>;
-        return (
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">Full Data Export</h2>
-            <p className="text-sm text-muted-foreground">Export all organization-wide data (Excel).</p>
-            <button onClick={exportFullData} className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-              <Download className="h-4 w-4" /> Export Full Data
-            </button>
-          </div>
-        );
-    }
-  };
+    const doc = new jsPDF({ orientation: "landscape" });
+    sheets.forEach((sheet, index) => {
+      if (index) doc.addPage();
+      autoTable(doc, {
+        startY: 43, margin: { top: 43 }, head: [sheet.columns], body: sheet.rows.map((row) => row.map(String)),
+        styles: { fontSize: 8 },
+        didDrawPage: () => {
+          if (logo) doc.addImage(logo, "PNG", 14, 7, 32, 16);
+          doc.setFontSize(15);
+          doc.text(sheet.name, 14, 30);
+          doc.setFontSize(9);
+          doc.text(`Generated ${formatDate(new Date().toISOString())}`, 14, 36);
+        },
+      });
+    });
+    doc.save(`${activeTab}-report.pdf`);
+  }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Reports & Exports</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Department summaries, data exports, and performance analytics.
-        </p>
+        <h1 className="text-2xl font-bold">Reports & Exports</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Department summaries and data exports.</p>
       </div>
-
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="w-full md:w-64 shrink-0 space-y-1">
-          <button 
-            onClick={() => setActiveTab("monthly")}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "monthly" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-          >
-            <BarChart className="h-4 w-4" /> Monthly Dept Report
-          </button>
-          <button 
-            onClick={() => setActiveTab("employee")}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "employee" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-          >
-            <Users className="h-4 w-4" /> Employee Report
-          </button>
-          <button 
-            onClick={() => setActiveTab("meeting")}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "meeting" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-          >
-            <FileText className="h-4 w-4" /> Weekly Meeting
-          </button>
-          <button 
-            onClick={() => setActiveTab("calendar")}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "calendar" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-          >
-            <Calendar className="h-4 w-4" /> 52 Week Calendar
-          </button>
-          {user.role === "admin" && (
-            <button 
-              onClick={() => setActiveTab("export")}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "export" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-            >
-              <Download className="h-4 w-4" /> Full Data Export
-            </button>
-          )}
+      <div className="flex flex-col gap-8 md:flex-row">
+        <div className="space-y-1 md:w-64 md:shrink-0">
+          {(Object.keys(reports) as (keyof typeof reports)[]).filter((key) => allowed[key]).map((key) => {
+            const Icon = reportIcons[key];
+            return <button key={key} onClick={() => setTab(key)} className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${activeTab === key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+              <Icon className="h-4 w-4" /> {reports[key]}
+            </button>;
+          })}
         </div>
-        <div className="flex-1 rounded-lg border border-border bg-background p-6 shadow-sm">
-          {renderContent()}
-        </div>
+        <section className="min-w-0 flex-1 space-y-4 rounded-lg border border-border bg-background p-6 shadow-sm">
+          <h2 className="text-lg font-medium">{reports[activeTab]}</h2>
+          <div className="flex flex-wrap items-end gap-3 text-sm">
+            {activeTab === "monthly" && <label>Department <select value={selectedDepartment?.id ?? ""} onChange={(event) => setDepartmentId(event.target.value)} className="rounded border p-1">
+              {scope.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
+            </select></label>}
+            {(activeTab === "monthly" || activeTab === "meeting") && <label>Month <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} className="rounded border p-1" /></label>}
+            {activeTab === "employee" && <>
+              <label>Employee <select value={selectedEmployee.id} onChange={(event) => setEmployeeId(event.target.value)} className="rounded border p-1">
+                {employees.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
+              </select></label>
+              <label>From <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="rounded border p-1" /></label>
+              <label>To <input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="rounded border p-1" /></label>
+            </>}
+            <button disabled={!hasRows} onClick={downloadExcel} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"><Download className="h-4 w-4" /> Export Excel</button>
+            {(activeTab === "employee" || activeTab === "calendar") && <button disabled={!hasRows} onClick={downloadPDF} className="rounded-md border px-4 py-2 disabled:opacity-50">Export PDF</button>}
+          </div>
+          {!hasRows && <p className="text-sm text-muted-foreground">{exportable ? "No records match these filters." : "End date must be on or after start date."}</p>}
+          {sheets.filter((sheet) => sheet.rows.length).map((sheet) => <div key={sheet.name} className="overflow-auto rounded-md border">
+            <table className="w-full text-left text-sm">
+              <caption className="px-3 py-2 text-left font-medium">{sheet.name}</caption>
+              <thead className="bg-surface"><tr>{sheet.columns.map((column, index) => <th key={index} className="whitespace-nowrap px-3 py-2">{column}</th>)}</tr></thead>
+              <tbody>{sheet.rows.map((row, index) => <tr key={index} className="border-t">{row.map((cell, column) => <td key={column} className="px-3 py-2">{String(cell)}</td>)}</tr>)}</tbody>
+            </table>
+          </div>)}
+        </section>
       </div>
     </div>
   );

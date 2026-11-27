@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCurrentUser } from "../../../lib/rivet/store";
 import { departmentName } from "../../../lib/rivet/demo-data";
 import { ArrowRight, CircleDot } from "lucide-react";
-import { useMemo } from "react";
 import { canCreateIn } from "../../../lib/rivet/nav";
 import { accessibleModules as modulesFor } from "../../../lib/rivet/permissions";
 
@@ -13,9 +12,7 @@ export const Route = createFileRoute("/app/modules/")({
 function ModulesPage() {
   const user = useCurrentUser();
 
-  const accessibleModules = useMemo(() => {
-    return modulesFor(user);
-  }, [user]);
+  const accessibleModules = modulesFor(user);
 
   return (
     <div className="space-y-8">

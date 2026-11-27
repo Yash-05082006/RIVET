@@ -1,3 +1,4 @@
+import { EntryDiscussion } from "../../../components/work/EntryDiscussion";
 import { useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Check, X, AlertCircle } from "lucide-react";
@@ -234,22 +235,7 @@ function EntryReviewPage() {
               <dd className="text-muted-foreground mt-0.5">{entry.decidedAt ? formatDateTime(entry.decidedAt) : "—"}</dd>
             </div>
           </dl>
-          {entry.comments && entry.comments.length > 0 && (
-            <div className="mt-6 border-t border-border pt-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comments</h3>
-              <ul className="space-y-3">
-                {entry.comments.map((cm) => (
-                  <li key={cm.id} className="rounded-md bg-surface p-3 border border-border/50">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                      <span className="font-medium text-foreground">{users.find((u) => u.id === cm.authorId)?.name || cm.authorId}</span>
-                      <span>{formatDateTime(cm.createdAt)}</span>
-                    </div>
-                    <p className="text-sm text-foreground">{cm.body}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <EntryDiscussion entry={entry} />
         </div>
       </div>
 

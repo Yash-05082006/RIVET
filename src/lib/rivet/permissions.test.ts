@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { users } from "./demo-data";
-import { accessibleModules, canAccessPath, canDecideEntry, canModule, canReviewEntry } from "./permissions";
+import { accessibleModules, canAccessPath, canDecideEntry, canModule, canReviewEntry, canViewEntry, canEditEntry } from "./permissions";
 import { logEntries } from "./demo-data";
 
 const u = (id: string) => users.find((x) => x.id === id)!;
@@ -44,7 +44,10 @@ describe("approval permissions and transitions", () => {
   const pendingData = logEntries.find((entry) => entry.id === "E-1045");
   const approvedData = logEntries.find((entry) => entry.id === "E-1046");
   const sharedWebinar = {
-    ...logEntries.find((entry) => entry.moduleKey === "webinar-series-planner")!,
+    ...pendingData!,
+    moduleKey: "webinar-series-planner",
+    authorId: "u-mgr-data",
+    status: "approved" as const,
   };
 
   it("keeps managers inside their assigned departments", () => {
@@ -55,6 +58,20 @@ describe("approval permissions and transitions", () => {
 
   it("does not treat shared webinar records as personal approval submissions", () => {
     expect(canReviewEntry(u("u-mgr-data"), sharedWebinar)).toBe(false);
+  });
+
+  it("keeps private drafts visible to the owner and out of manager review", () => {
+    const draft = logEntries.find((entry) => entry.id === "E-1042")!;
+    expect(canViewEntry(u("u-emp-1"), draft)).toBe(true);
+    expect(canViewEntry(u("u-mgr-research"), draft)).toBe(false);
+    expect(canReviewEntry(u("u-mgr-research"), draft)).toBe(false);
+  });
+
+  it("allows scoped read-only webinar access and maintenance by managers", () => {
+    expect(canViewEntry(u("u-emp-3"), sharedWebinar)).toBe(true);
+    expect(canViewEntry(u("u-emp-1"), sharedWebinar)).toBe(false);
+    expect(canEditEntry(u("u-emp-3"), sharedWebinar)).toBe(false);
+    expect(canEditEntry(u("u-mgr-data"), sharedWebinar)).toBe(true);
   });
 
   it("allows only pending decisions and requires a rejection remark", () => {

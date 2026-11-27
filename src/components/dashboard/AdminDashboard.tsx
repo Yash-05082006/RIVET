@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRivet } from "../../lib/rivet/store";
 import { userName, departmentName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
@@ -6,14 +7,15 @@ import { formatDateTime } from "../../lib/formatDate";
 import { ActivityFeed } from "./ActivityFeed";
 
 export function AdminDashboard() {
-  const { reviewQueue, audit, activity, users, departments, modules } = useRivet();
+  const { reviewQueue, audit, activity, users, departments, modules, visibleEntries } = useRivet();
 
   const activeUsers = users.filter((u) => u.active).length;
   const activeModules = modules.filter((m) => m.active).length;
   const pendingApprovals = reviewQueue.length;
 
   const recentAudit = audit.slice(0, 10);
-  const systemActivity = activity.slice(0, 10);
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const systemActivity = activity.filter((event) => !departmentFilter || event.departmentId === departmentFilter).slice(0, 100);
 
   const actionBadge = (action: string) => {
     const map: Record<string, string> = {
@@ -96,6 +98,16 @@ export function AdminDashboard() {
       </div>
 
       {/* Activity Feed */}
+      <section className="space-y-2 rounded-lg border border-border p-4 text-sm">
+        <h2 className="font-medium">Department summary</h2>
+        {departments.map((department) => <p key={department.id}>
+          {department.name} · {visibleEntries.filter((entry) => entry.departmentId === department.id && entry.status !== "draft").length} records · {reviewQueue.filter((entry) => entry.departmentId === department.id).length} pending
+        </p>)}
+      </section>
+      <label className="block text-sm">Activity department <select className="rounded border p-1" value={departmentFilter} onChange={(event) => setDepartmentFilter(event.target.value)}>
+        <option value="">All departments</option>
+        {departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
+      </select></label>
       <ActivityFeed activities={systemActivity} title="System Activity" />
 
       {/* Audit log table */}

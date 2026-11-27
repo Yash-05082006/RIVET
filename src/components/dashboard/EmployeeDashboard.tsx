@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import { FileEdit, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
 import { formatDate } from "../../lib/formatDate";
+import { addDays, format } from "date-fns";
+import { accessibleModules as getAccessibleModules } from "../../lib/rivet/permissions";
 import { ActivityFeed } from "./ActivityFeed";
 
 function StatusBadge({ status }: { status: LogEntry["status"] }) {
@@ -38,7 +40,7 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
 
 export function EmployeeDashboard() {
   const user = useCurrentUser();
-  const { myEntries, activity, modules } = useRivet();
+  const { myEntries, activity, visibleEntries, myNotifications } = useRivet();
 
   const attentionRequired = myEntries.filter(
     (e) => e.status === "rejected" || e.status === "draft"
@@ -48,19 +50,24 @@ export function EmployeeDashboard() {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, 5);
 
-  const accessibleModules = modules.filter(
-    (m) => user.departmentIds.includes(m.departmentId) && m.createRoles.includes(user.role)
-  );
-
-  // Relevant activity: anything where actor is the user, or it's about the user's entry
-  const userActivity = activity.filter((a) => {
-    if (a.actorId === user.id) return true;
-    if (a.entryId) {
-      const entry = myEntries.find((e) => e.id === a.entryId);
-      if (entry) return true;
-    }
-    return false;
-  }).slice(0, 10);
+  const accessibleModules = getAccessibleModules(user);
+  const now = new Date();
+  const today = format(now, "yyyy-MM-dd");
+  const monthEntries = myEntries.filter((entry) => entry.entryDate.startsWith(today.slice(0, 7)));
+  const approvedDates = new Set(myEntries.filter((entry) => entry.status === "approved").map((entry) => entry.entryDate));
+  let streak = 0;
+  const start = approvedDates.has(today) ? now : addDays(now, -1);
+  while (approvedDates.has(format(addDays(start, -streak), "yyyy-MM-dd"))) streak += 1;
+  const upcoming = visibleEntries.filter((entry) => entry.moduleKey === "webinar-series-planner" &&
+    entry.entryDate >= today && ["Planned", "Confirmed"].includes(String(entry.values.status)))
+    .sort((a, b) => a.entryDate.localeCompare(b.entryDate));
+  const reminders = myNotifications.filter((item) => item.id.startsWith("daily-reminder-")).map((item) => ({
+    id: item.id, action: "reminded" as const, actorId: user.id, departmentId: user.departmentIds[0] ?? "", createdAt: item.createdAt,
+  }));
+  const userActivity = [...activity.filter((item) => item.entryId
+    ? visibleEntries.some((entry) => entry.id === item.entryId &&
+      (entry.authorId === user.id || item.actorId === user.id || item.mentions?.includes(user.id)))
+    : item.actorId === user.id), ...reminders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 30);
 
   return (
     <div className="space-y-6">
@@ -80,6 +87,17 @@ export function EmployeeDashboard() {
           
           <ActivityFeed activities={userActivity} title="Your Recent Activity" />
 
+          <section className="rounded-lg border border-border p-4 text-sm">
+            <h2 className="mb-2 font-medium">This month</h2>
+            <p>{monthEntries.length} entries · {monthEntries.filter((entry) => entry.status === "approved").length} approved · {monthEntries.filter((entry) => entry.status === "submitted").length} pending · {monthEntries.filter((entry) => entry.status === "rejected").length} rejected</p>
+            <p className="mt-2">Approved-entry streak {streak} {streak === 1 ? "day" : "days"}</p>
+          </section>
+          {upcoming.length > 0 && <section className="space-y-2 rounded-lg border border-border p-4 text-sm">
+            <h2 className="font-medium">Upcoming webinars</h2>
+            {upcoming.map((entry) => <Link className="block text-primary" key={entry.id} to="/app/modules/$moduleKey/entry/$entryId" params={{ moduleKey: entry.moduleKey, entryId: entry.id }} search={{ from: undefined }}>
+              {formatDate(entry.entryDate)} · {String(entry.values.topic)}
+            </Link>)}
+          </section>}
           {/* Attention Required */}
           {attentionRequired.length > 0 && (
             <section>

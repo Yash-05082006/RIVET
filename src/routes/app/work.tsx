@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { moduleName, departmentName } from "../../lib/rivet/demo-data";
 import { AlertCircle, FileEdit, CheckCircle2, XCircle, Clock, ArrowRight } from "lucide-react";
 import type { LogEntry } from "../../lib/rivet/types";
-import { formatDate } from "../../lib/formatDate";
+import { formatDate, matchesEntryDateRange } from "../../lib/formatDate";
 
 export const Route = createFileRoute("/app/work")({
   component: WorkPage,
@@ -32,8 +33,13 @@ function StatusBadge({ status }: { status: LogEntry["status"] }) {
 function WorkPage() {
   const user = useCurrentUser();
   const { myEntries } = useRivet();
+  const [board, setBoard] = useState(false);
+  const [module, setModule] = useState("");
+  const [status, setStatus] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
-  const entries = [...myEntries].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const entries = myEntries.filter((entry) => (!module || entry.moduleKey === module) && (!status || entry.status === status) && matchesEntryDateRange(entry.entryDate, from, to)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   const rejected = entries.filter((e) => e.status === "rejected");
   const drafts = entries.filter((e) => e.status === "draft");
@@ -49,6 +55,27 @@ function WorkPage() {
         </p>
       </div>
 
+      <div className="flex flex-wrap items-end gap-3 text-sm">
+        <label>Module <select className="rounded border p-1" value={module} onChange={(event) => setModule(event.target.value)}>
+          <option value="">All modules</option>
+          {[...new Set(myEntries.map((entry) => entry.moduleKey))].map((key) => <option key={key} value={key}>{moduleName(key)}</option>)}
+        </select></label>
+        <label>Status <select className="rounded border p-1" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <option value="">All statuses</option>
+          {Object.entries(STATUS_CONFIG).map(([key, config]) => <option key={key} value={key}>{config.label}</option>)}
+        </select></label>
+        <label>From <input className="rounded border p-1" type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
+        <label>To <input className="rounded border p-1" type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
+      <button className="rounded border px-3 py-2 text-sm" onClick={() => setBoard(!board)}>{board ? "List view" : "Board view"}</button>
+      </div>
+      {board ? <div className="grid gap-4 md:grid-cols-4">
+        {(Object.keys(STATUS_CONFIG) as LogEntry["status"][]).map((status) => <section className="space-y-2 rounded border p-3" key={status}>
+          <h2><StatusBadge status={status} /></h2>
+          {entries.filter((entry) => entry.status === status).map((entry) => <Link key={entry.id} className="block rounded border p-2 text-sm" to="/app/modules/$moduleKey/entry/$entryId" params={{moduleKey: entry.moduleKey, entryId: entry.id}} search={{ from: "work" }}>
+            {moduleName(entry.moduleKey)} · {formatDate(entry.entryDate)}
+          </Link>)}
+        </section>)}
+      </div> : <>
       {/* Attention required */}
       {attentionItems.length > 0 && (
         <div className="space-y-3">
@@ -151,6 +178,7 @@ function WorkPage() {
           </div>
         )}
       </div>
+      </>}
     </div>
   );
 }

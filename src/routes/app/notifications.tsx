@@ -1,3 +1,4 @@
+import { canReviewEntry } from "../../lib/rivet/permissions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { formatDateTime } from "../../lib/formatDate";
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/app/notifications")({
 
 function NotificationsPage() {
   const user = useCurrentUser();
-  const { myNotifications, markRead, markAllRead, entries } = useRivet();
+  const { myNotifications, markRead, markAllRead, visibleEntries: entries } = useRivet();
 
   return (
     <div className="space-y-8">
@@ -63,7 +64,7 @@ function NotificationsPage() {
                       
                       // Using canReviewEntry from permissions would be ideal, but for simplicity here we check role.
                       // Admin/Manager can go to approvals detail for pending/approved entries if they are not the author (or we just let them try)
-                      const isReviewer = (user.role === "admin" || user.role === "manager") && entry.authorId !== user.id;
+                      const isReviewer = canReviewEntry(user, entry) && entry.authorId !== user.id;
 
                       if (isReviewer) {
                         return (

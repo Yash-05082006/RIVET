@@ -96,6 +96,7 @@ export interface LogEntry {
   submittedAt?: string;
   decidedAt?: string;
   decidedById?: string;
+  previousDecisions?: { status: "approved" | "rejected"; at: string; by?: string; remarks?: string }[];
   managerRemarks?: string;
   editedByManager?: boolean;
   comments: EntryComment[];
@@ -138,7 +139,8 @@ export type ActivityAction =
   | "approved"
   | "rejected"
   | "commented"
-  | "edited";
+  | "edited"
+  | "reminded";
 
 export interface ActivityItem {
   id: string;
@@ -149,6 +151,7 @@ export interface ActivityItem {
   departmentId: string;
   createdAt: string;
   detail?: string;
+  mentions?: string[];
 }
 
 export interface AuditRecord {
