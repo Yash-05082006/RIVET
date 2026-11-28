@@ -1,14 +1,16 @@
+import { entryDisplayId } from "../../../lib/rivet/entryId";
+import { getModule } from "../../../lib/rivet/demo-data";
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment } from "react";
 import { useRivet } from "../../../lib/rivet/store";
-import { formatDateTime } from "../../../lib/formatDate";
+import { formatDate, formatDateTime } from "../../../lib/formatDate";
 
 export const Route = createFileRoute("/app/admin/audit")({
   component: AuditAdminPage,
 });
 
 function AuditAdminPage() {
-  const { audit, users } = useRivet();
+  const { audit, users, visibleEntries } = useRivet();
 
   function actorName(id: string) {
     return users.find((u) => u.id === id)?.name ?? id;
@@ -35,7 +37,7 @@ function AuditAdminPage() {
     return map[field] || field;
   }
 
-  function formatValue(field: string, val: string) {
+  function formatValue(field: string, val: string, entryId: string) {
     if (val === "" || val === "undefined" || val === "null") return "None";
     if (field === "active") {
       return val === "true" ? "Active" : "Inactive";
@@ -43,7 +45,9 @@ function AuditAdminPage() {
     if (field === "deleted") {
       return val === "true" ? "Deleted/Archived" : "Active";
     }
-    return val;
+    const entry = visibleEntries.find((item) => item.id === entryId);
+    const type = entry && getModule(entry.moduleKey)?.fields.find((item) => item.key === field)?.type;
+    return type === "date" || type === "month" ? formatDate(val) : val;
   }
 
   return (
@@ -81,7 +85,7 @@ function AuditAdminPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{record.entity}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{record.entityId}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{entryDisplayId(visibleEntries.find((entry) => entry.id === record.entityId) ?? { id: record.entityId })}</td>
                   </tr>
                   {(() => {
                     const validDiffs = record.diff?.filter(d => d.from !== d.to);
@@ -102,9 +106,9 @@ function AuditAdminPage() {
                                 <li key={i} className="text-sm grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2">
                                   <span className="font-medium text-foreground">{formatFieldName(d.field)}:</span>
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-red-500 line-through bg-red-500/10 px-1.5 py-0.5 rounded">{formatValue(d.field, d.from)}</span>
+                                    <span className="text-red-500 line-through bg-red-500/10 px-1.5 py-0.5 rounded">{formatValue(d.field, d.from, record.entityId)}</span>
                                     <span className="text-muted-foreground text-xs">→</span>
-                                    <span className="text-green-600 font-medium bg-green-500/10 px-1.5 py-0.5 rounded">{formatValue(d.field, d.to)}</span>
+                                    <span className="text-green-600 font-medium bg-green-500/10 px-1.5 py-0.5 rounded">{formatValue(d.field, d.to, record.entityId)}</span>
                                   </div>
                                 </li>
                               ))}

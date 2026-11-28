@@ -1,3 +1,4 @@
+import { DateInput } from "../../../components/ui/date-input";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { useState } from "react";
@@ -19,8 +20,8 @@ function NewCampaignPage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState(today());
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState<string | null>(today());
+  const [endDate, setEndDate] = useState<string | null>("");
   const [platform, setPlatform] = useState("");
   const [status, setStatus] = useState<"Active" | "Completed" | "On Hold">("Active");
 
@@ -42,8 +43,8 @@ function NewCampaignPage() {
   const handleSave = () => {
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Campaign name is required";
-    if (!startDate.trim()) errs.startDate = "Start date is required";
-    if (!endDate.trim()) errs.endDate = "End date is required";
+    if (!startDate) errs.startDate = "Start date is required";
+    if (!endDate) errs.endDate = "End date is required";
     if (!platform.trim()) errs.platform = "Platform is required";
 
     if (startDate && endDate && startDate > endDate) {
@@ -53,6 +54,7 @@ function NewCampaignPage() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
+    if (!startDate || !endDate) return;
     createCampaign({
       name: name.trim(),
       description: description.trim(),
@@ -117,10 +119,10 @@ function NewCampaignPage() {
               <label className="block text-sm font-medium text-foreground mb-1.5">
                 Start Date <span className="text-red-500">*</span>
               </label>
-              <input
-                type="date"
+              <DateInput
+                aria-label="Start Date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onValueChange={setStartDate}
                 className={`w-full rounded-md border px-3 py-2 text-sm text-foreground outline-none transition-colors ${
                   errors.startDate ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200" : "border-border focus:border-primary focus:ring-2 focus:ring-primary-light"
                 }`}
@@ -131,10 +133,10 @@ function NewCampaignPage() {
               <label className="block text-sm font-medium text-foreground mb-1.5">
                 End Date <span className="text-red-500">*</span>
               </label>
-              <input
-                type="date"
+              <DateInput
+                aria-label="End Date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onValueChange={setEndDate}
                 className={`w-full rounded-md border px-3 py-2 text-sm text-foreground outline-none transition-colors ${
                   errors.endDate ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200" : "border-border focus:border-primary focus:ring-2 focus:ring-primary-light"
                 }`}

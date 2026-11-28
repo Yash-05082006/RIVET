@@ -1,3 +1,4 @@
+import { entryDisplayId } from "../../../lib/rivet/entryId";
 import { EntryDiscussion } from "../../../components/work/EntryDiscussion";
 import { useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -186,7 +187,7 @@ function EntryReviewPage() {
                 displayVal = <span className="text-muted-foreground italic">Not provided</span>;
               } else if (typeof val === "boolean") {
                 displayVal = val ? "Yes" : "No";
-              } else if (field.type === "date") {
+              } else if (field.type === "date" || field.type === "month") {
                 displayVal = formatDate(String(val));
               }
 
@@ -212,7 +213,7 @@ function EntryReviewPage() {
           <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
             <div>
               <dt className="text-xs text-muted-foreground">Entry ID</dt>
-              <dd className="font-mono text-foreground font-medium mt-0.5">{entry.id}</dd>
+              <dd className="font-mono text-foreground font-medium mt-0.5">{entryDisplayId(entry)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Entry Date</dt>

@@ -45,6 +45,7 @@ function AppLayout() {
   const { user, ready, signOut, unreadCount, reviewQueue, visibleEntries, modules, departments } = useRivet();
   const navigate = useNavigate();
   const location = useLocation();
+  const isReportsPage = location.pathname.replace(/\/$/, "") === "/app/reports";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -92,7 +93,7 @@ function AppLayout() {
 
       {/* Sidebar - never scrolls with the page */}
       <aside
-        className={`relative fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-surface transition-all duration-200 ease-in-out md:static md:translate-x-0 md:flex-shrink-0 ${sidebarWidth} ${
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-surface transition-all duration-200 ease-in-out md:static md:translate-x-0 md:flex-shrink-0 ${sidebarWidth} ${
           mobileMenuOpen ? "translate-x-0 !w-64" : "-translate-x-full"
         }`}
       >
@@ -234,7 +235,7 @@ function AppLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-8">
-          <div className="mx-auto max-w-6xl">
+          <div className={isReportsPage ? "w-full" : "mx-auto max-w-6xl"}>
             {allowed ? (
               <Outlet />
             ) : (

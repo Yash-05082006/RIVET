@@ -1,3 +1,4 @@
+import { formatDate } from "../formatDate";
 /**
  * Session + application state.
  *
@@ -13,10 +14,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
+import { highestEntryNumber } from "./entryId";
 import {
   canDecideEntry,
   canModule,
@@ -167,6 +170,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
     createdAt: webinar.scheduledDate, updatedAt: webinar.scheduledDate, comments: [],
     values: { ...webinar, notes: webinar.notes ?? "" },
   }))]);
+  const entrySequence = useRef(highestEntryNumber(seedEntries));
   const [campaignList, setCampaignList] = useState<Campaign[]>(seedCampaigns);
   const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
   const [activity, setActivity] = useState<ActivityItem[]>(seedActivity);
@@ -326,7 +330,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
               kind: "submission" as NotificationKind,
               recipientId: m.id,
               title: `New Submission: ${modName}`,
-              body: `${user.name} submitted an entry for ${entry.entryDate}.`,
+              body: `${user.name} submitted an entry for ${formatDate(entry.entryDate)}.`,
               createdAt: now,
               read: false,
               entryId: id,
@@ -348,13 +352,15 @@ export function RivetProvider({ children }: { children: ReactNode }) {
       const pending = submit && mod.approvalRequired;
       const shared = !mod.approvalRequired;
       const now = new Date().toISOString();
-      const id = `E-${crypto.randomUUID()}`;
+      const id = crypto.randomUUID();
+      const displayId = `E-${++entrySequence.current}`;
       if (moduleKey === "webinar-series-planner") {
         const seriesNumber = Math.max(0, ...entries.filter((entry) => entry.moduleKey === moduleKey).map((entry) => Number(entry.values.seriesNumber) || 0)) + 1;
         values = { ...values, seriesNumber };
       }
       const entry: LogEntry = {
         id,
+        displayId,
         moduleKey,
         departmentId: mod?.departmentId ?? user.departmentIds[0],
         authorId: author.id,
@@ -391,7 +397,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
               kind: "submission" as NotificationKind,
               recipientId: m.id,
               title: `New Submission: ${mod?.name ?? "Entry"}`,
-              body: `${user.name} submitted an entry for ${entryDate}.`,
+              body: `${user.name} submitted an entry for ${formatDate(entryDate)}.`,
               createdAt: now,
               read: false,
               entryId: id,
@@ -506,7 +512,7 @@ export function RivetProvider({ children }: { children: ReactNode }) {
             id: nextId("n"),
             kind: decision === "approved" ? "approved" : "rejected",
             recipientId: entry.authorId,
-            title: `${getModule(entry.moduleKey)?.name ?? "Entry"} for ${entry.entryDate} was ${decision}`,
+            title: `${getModule(entry.moduleKey)?.name ?? "Entry"} for ${formatDate(entry.entryDate)} was ${decision}`,
             body: remarks ? remarks : `${decision === "approved" ? "Approved" : "Rejected"} by ${user.name}.`,
             createdAt: now,
             read: false,

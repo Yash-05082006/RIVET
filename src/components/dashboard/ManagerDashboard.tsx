@@ -1,3 +1,4 @@
+import { entryDisplayId } from "../../lib/rivet/entryId";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { getModule, moduleName, userName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
@@ -165,7 +166,7 @@ export function ManagerDashboard() {
                           {userName(entry.authorId)}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
-                          {moduleName(entry.moduleKey)}
+                          {entryDisplayId(entry)} · {moduleName(entry.moduleKey)}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {entry.submittedAt
@@ -217,7 +218,7 @@ export function ManagerDashboard() {
                         </p>
                         <StatusBadge status={entry.status} />
                       </div>
-                      <p className="text-xs text-muted-foreground">{moduleName(entry.moduleKey)}</p>
+                      <p className="text-xs text-muted-foreground">{entryDisplayId(entry)} · {moduleName(entry.moduleKey)}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatDate(entry.updatedAt)}
                       </p>

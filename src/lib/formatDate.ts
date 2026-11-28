@@ -48,3 +48,15 @@ export function matchesEntryDateRange(entryDate: string, from: string, to: strin
   return (!from || entryDate >= (isMonth ? from.slice(0, 7) : from)) &&
     (!to || entryDate <= (isMonth ? to.slice(0, 7) : to));
 }
+
+/** Parse a calendar date without converting it to a local or UTC timestamp. */
+export function parseDisplayDate(text: string, monthOnly = false): string | null {
+  if (!text.trim()) return "";
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text.trim());
+  if (!match) return null;
+  const [, day, month, year] = match;
+  const value = `${year}-${month}-${day}`;
+  const check = new Date(`${value}T00:00:00Z`);
+  if (year === "0000" || Number.isNaN(check.getTime()) || check.toISOString().slice(0, 10) !== value) return null;
+  return monthOnly ? value.slice(0, 7) : value;
+}

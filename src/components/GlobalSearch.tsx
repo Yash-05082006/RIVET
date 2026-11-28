@@ -1,3 +1,5 @@
+import { entryDisplayId } from "../lib/rivet/entryId";
+import { formatDate } from "../lib/formatDate";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, FileText, LayoutGrid, Users, Megaphone } from "lucide-react";
@@ -81,7 +83,7 @@ export function GlobalSearch() {
       const author = users.find(u => u.id === e.authorId);
       if (author && author.name.toLowerCase().includes(term)) matches = true;
       
-      if (e.entryDate.includes(term) || moduleName(e.moduleKey).toLowerCase().includes(term)) matches = true;
+      if (e.entryDate.includes(term) || formatDate(e.entryDate).includes(term) || entryDisplayId(e).toLowerCase().includes(term) || moduleName(e.moduleKey).toLowerCase().includes(term)) matches = true;
       
       if (!matches) {
         for (const [k, v] of Object.entries(e.values)) {
@@ -99,8 +101,8 @@ export function GlobalSearch() {
         results.push({
           id: e.id,
           type: "entry",
-          title: `${modName} (${e.id})`,
-          subtitle: `${author?.name ?? "Unknown"} • ${e.entryDate}`,
+          title: `${modName} (${entryDisplayId(e)})`,
+          subtitle: `${author?.name ?? "Unknown"} • ${formatDate(e.entryDate)}`,
           icon: FileText,
           linkParams: { isReviewer, moduleKey: e.moduleKey }
         });

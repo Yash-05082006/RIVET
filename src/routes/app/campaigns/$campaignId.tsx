@@ -1,3 +1,4 @@
+import { entryDisplayId } from "../../../lib/rivet/entryId";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Megaphone, Calendar, Users, Target, Activity, Share2, Clock, CheckCircle } from "lucide-react";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
@@ -197,7 +198,7 @@ function CampaignDetailPage() {
                           {formatDate(entry.entryDate)}
                         </td>
                         <td className="px-5 py-3 align-middle font-medium text-foreground whitespace-nowrap">
-                          {moduleName(entry.moduleKey)}
+                          {entryDisplayId(entry)} · {moduleName(entry.moduleKey)}
                         </td>
                         <td className="px-5 py-3 align-middle text-muted-foreground max-w-sm truncate" title={detail}>
                           {detail}

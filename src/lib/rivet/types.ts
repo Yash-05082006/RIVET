@@ -83,6 +83,7 @@ export interface EntryComment {
 
 export interface LogEntry {
   id: string;
+  displayId?: string;
   moduleKey: string;
   departmentId: string;
   authorId: string;

@@ -1,3 +1,5 @@
+import { DateInput } from "../../components/ui/date-input";
+import { entryDisplayId } from "../../lib/rivet/entryId";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
@@ -36,10 +38,10 @@ function WorkPage() {
   const [board, setBoard] = useState(false);
   const [module, setModule] = useState("");
   const [status, setStatus] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [from, setFrom] = useState<string | null>("");
+  const [to, setTo] = useState<string | null>("");
 
-  const entries = myEntries.filter((entry) => (!module || entry.moduleKey === module) && (!status || entry.status === status) && matchesEntryDateRange(entry.entryDate, from, to)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const entries = myEntries.filter((entry) => (!module || entry.moduleKey === module) && (!status || entry.status === status) && from !== null && to !== null && matchesEntryDateRange(entry.entryDate, from, to)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   const rejected = entries.filter((e) => e.status === "rejected");
   const drafts = entries.filter((e) => e.status === "draft");
@@ -61,18 +63,18 @@ function WorkPage() {
           {[...new Set(myEntries.map((entry) => entry.moduleKey))].map((key) => <option key={key} value={key}>{moduleName(key)}</option>)}
         </select></label>
         <label>Status <select className="rounded border p-1" value={status} onChange={(event) => setStatus(event.target.value)}>
-          <option value="">All statuses</option>
+          <option value="">All Status</option>
           {Object.entries(STATUS_CONFIG).map(([key, config]) => <option key={key} value={key}>{config.label}</option>)}
         </select></label>
-        <label>From <input className="rounded border p-1" type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
-        <label>To <input className="rounded border p-1" type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
+        <label>From <DateInput className="rounded border p-1" value={from} onValueChange={setFrom} /></label>
+        <label>To <DateInput className="rounded border p-1" value={to} onValueChange={setTo} /></label>
       <button className="rounded border px-3 py-2 text-sm" onClick={() => setBoard(!board)}>{board ? "List view" : "Board view"}</button>
       </div>
       {board ? <div className="grid gap-4 md:grid-cols-4">
         {(Object.keys(STATUS_CONFIG) as LogEntry["status"][]).map((status) => <section className="space-y-2 rounded border p-3" key={status}>
           <h2><StatusBadge status={status} /></h2>
           {entries.filter((entry) => entry.status === status).map((entry) => <Link key={entry.id} className="block rounded border p-2 text-sm" to="/app/modules/$moduleKey/entry/$entryId" params={{moduleKey: entry.moduleKey, entryId: entry.id}} search={{ from: "work" }}>
-            {moduleName(entry.moduleKey)} · {formatDate(entry.entryDate)}
+            {entryDisplayId(entry)} · {moduleName(entry.moduleKey)} · {formatDate(entry.entryDate)}
           </Link>)}
         </section>)}
       </div> : <>
@@ -94,7 +96,7 @@ function WorkPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-sm font-medium text-foreground">{moduleName(entry.moduleKey)}</p>
+                        <p className="text-sm font-medium text-foreground">{entryDisplayId(entry)} · {moduleName(entry.moduleKey)}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {departmentName(entry.departmentId)} · <span className="whitespace-nowrap">Entry date: {formatDate(entry.entryDate)}</span>
                         </p>
@@ -144,7 +146,7 @@ function WorkPage() {
               <tbody className="divide-y divide-border">
                 {otherEntries.map((entry) => (
                   <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{moduleName(entry.moduleKey)}</td>
+                    <td className="px-4 py-3 font-medium text-foreground">{entryDisplayId(entry)} · {moduleName(entry.moduleKey)}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{departmentName(entry.departmentId)}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(entry.entryDate)}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">

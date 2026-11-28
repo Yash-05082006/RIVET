@@ -1,3 +1,5 @@
+import { DateInput } from "../../../../components/ui/date-input";
+import { entryDisplayId } from "../../../../lib/rivet/entryId";
 import { canEditEntry, hasPermission } from "../../../../lib/rivet/permissions";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -105,7 +107,7 @@ function WeeklyMeetingSummary({ entries }: { entries: LogEntry[] }) {
                 .sort(([a], [b]) => b.localeCompare(a))
                 .map(([month, monthEntries]) => (
                   <tr key={month} className="hover:bg-surface/50">
-                    <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{month}</td>
+                    <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{formatDate(month)}</td>
                     <td className="px-4 py-2.5 text-right text-muted-foreground">
                       {monthEntries.reduce((s, e) => s + (Number(e.values.physicalMeetings) || 0), 0)}
                     </td>
@@ -134,9 +136,9 @@ function WeeklyMeetingSummary({ entries }: { entries: LogEntry[] }) {
 /** Daily Meeting Attendance: daily + monthly totals per person and team */
 function AttendanceSummary({ entries, isManager }: { entries: LogEntry[]; isManager: boolean }) {
   const [period, setPeriod] = useState<"day" | "month">("month");
-  const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [date, setDate] = useState<string | null>(() => format(new Date(), "yyyy-MM-dd"));
   const relevant = entries.filter((entry) => (entry.status === "approved" || entry.status === "submitted") &&
-    (period === "day" ? entry.entryDate === date : entry.entryDate.startsWith(date.slice(0, 7))));
+    (!!date && (period === "day" ? entry.entryDate === date : entry.entryDate.startsWith(date.slice(0, 7)))));
 
 
   // Personal totals (current user's entries)
@@ -182,10 +184,9 @@ function AttendanceSummary({ entries, isManager }: { entries: LogEntry[]; isMana
         <label>Period <select className="rounded border p-1" value={period} onChange={(event) => setPeriod(event.target.value === "day" ? "day" : "month")}>
           <option value="day">Daily</option><option value="month">Monthly</option>
         </select></label>
-        <label>{period === "day" ? "Date" : "Month"} <input className="rounded border p-1" type={period === "day" ? "date" : "month"}
-          value={period === "day" ? date : date.slice(0, 7)} onChange={(event) => {
-            if (event.target.value) setDate(period === "day" ? event.target.value : `${event.target.value}-01`);
-          }} /></label>
+        <label>{period === "day" ? "Date" : "Month"} <DateInput key={period} className="rounded border p-1" monthOnly={period === "month"}
+          value={period === "month" ? date?.slice(0, 7) ?? date : date}
+          onValueChange={(value) => setDate(value && period === "month" ? `${value}-01` : value)} /></label>
       </div>
       {/* Per-person breakdown for managers */}
       {byAuthor && byAuthor.size > 0 && (
@@ -323,6 +324,7 @@ function ModuleDetailPage() {
           <table className="w-full text-sm text-left">
             <thead className="bg-surface text-muted-foreground text-xs uppercase font-medium border-b border-border">
               <tr>
+                <th className="px-4 py-3 whitespace-nowrap">Entry ID</th>
                 {showAuthorColumn && (
                   <th className="px-4 py-3 whitespace-nowrap">Author</th>
                 )}
@@ -346,6 +348,7 @@ function ModuleDetailPage() {
 
                   return (
                     <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap">{entryDisplayId(entry)}</td>
                       {showAuthorColumn && (
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {userName(entry.authorId)}
@@ -367,7 +370,7 @@ function ModuleDetailPage() {
                             }`}
                             title={!isShortOrDate ? String(entry.values[f.key] ?? "") : undefined}
                           >
-                            {f.type === "date" ? formatDate(String(entry.values[f.key] ?? "")) : String(entry.values[f.key] ?? "")}
+                            {f.type === "date" || f.type === "month" ? formatDate(String(entry.values[f.key] ?? "")) : String(entry.values[f.key] ?? "")}
                           </td>
                         );
                       })}
@@ -399,7 +402,7 @@ function ModuleDetailPage() {
               ) : (
                 <tr>
                   <td
-                    colSpan={tableFieldDefs.length + (showAuthorColumn ? 3 : 2)}
+                    colSpan={tableFieldDefs.length + (showAuthorColumn ? 4 : 3)}
                     className="px-4 py-12 text-center text-muted-foreground"
                   >
                     No entries yet.

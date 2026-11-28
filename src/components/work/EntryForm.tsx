@@ -1,3 +1,5 @@
+import { DateInput } from "../ui/date-input";
+import { entryDisplayId } from "../../lib/rivet/entryId";
 /**
  * EntryForm - dynamic form for creating/editing a LogEntry.
  *
@@ -75,6 +77,7 @@ export function EntryForm({ moduleDef, existingEntry, suggestedTopic, onPublishe
     return out;
   }, [moduleDef, existingEntry]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [invalidDates, setInvalidDates] = useState<Record<string, boolean>>({});
   const [values, setValues] = useState<Record<string, string>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
@@ -109,6 +112,9 @@ export function EntryForm({ moduleDef, existingEntry, suggestedTopic, onPublishe
 
   function validate(forSubmit: boolean): boolean {
     const errs: Record<string, string> = {};
+    for (const [field, invalid] of Object.entries(invalidDates)) {
+      if (invalid) errs[field] = "Enter a valid date in DD/MM/YYYY format.";
+    }
 
     // Required field validation (on submit only)
     if (forSubmit) {
@@ -258,6 +264,7 @@ export function EntryForm({ moduleDef, existingEntry, suggestedTopic, onPublishe
     <div className="space-y-6">
       {/* Module context header */}
       <div className="border-b border-border pb-5">
+        {existingEntry && <p className="mb-2 text-sm text-muted-foreground">Entry ID {entryDisplayId(existingEntry)}</p>}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
           <span>{departmentName(moduleDef.departmentId)}</span>
           <span>·</span>
@@ -425,20 +432,22 @@ export function EntryForm({ moduleDef, existingEntry, suggestedTopic, onPublishe
                     {field.required && <span className="ml-1 text-red-500">*</span>}
                   </label>
                 </div>
+              ) : field.type === "date" || field.type === "month" ? (
+                <DateInput
+                  id={fieldId}
+                  monthOnly={field.type === "month"}
+                  value={invalidDates[field.key] ? null : val}
+                  disabled={isViewOnly}
+                  onValueChange={(value) => {
+                    setInvalidDates((previous) => ({ ...previous, [field.key]: value === null }));
+                    if (value !== null) handleChange(field.key, value);
+                  }}
+                  className={`w-full rounded-md border px-3 py-2 text-sm text-foreground disabled:bg-surface ${err ? "border-red-400" : "border-border"}`}
+                />
               ) : (
                 <input
                   id={fieldId}
-                  type={
-                    field.type === "date"
-                      ? "date"
-                      : field.type === "month"
-                        ? "month"
-                        : field.type === "time"
-                          ? "time"
-                          : field.type === "integer" || field.type === "decimal"
-                            ? "number"
-                            : "text"
-                  }
+                  type={field.type === "time" ? "time" : field.type === "integer" || field.type === "decimal" ? "number" : "text"}
                   step={field.type === "decimal" ? "0.01" : undefined}
                   value={val}
                   disabled={isViewOnly}

@@ -1,6 +1,8 @@
+import { DateInput } from "../../../components/ui/date-input";
+import { entryDisplayId } from "../../../lib/rivet/entryId";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Clock, LayoutGrid, List, X } from "lucide-react";
+import { ArrowRight, Clock, LayoutGrid, List } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { useRivet, useCurrentUser } from "../../../lib/rivet/store";
 import { getModule, moduleName, departmentName } from "../../../lib/rivet/demo-data";
@@ -43,54 +45,29 @@ function StatusLabel({ status }: { status: ApprovalStatus }) {
 
 function ApprovalsPage() {
   const user = useCurrentUser();
-  const { approvalEntries, decide, users, departments } = useRivet();
+  const { approvalEntries, users, departments } = useRivet();
   const admin = hasPermission(user, "admin");
   const userDepartments = accessibleDepartments(user);
   const [view, setView] = useState<ViewMode>("list");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [moduleFilter, setModuleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkRemark, setBulkRemark] = useState("");
-  const [showBulkReject, setShowBulkReject] = useState(false);
-  const [bulkError, setBulkError] = useState("");
-  const [decisionTarget, setDecisionTarget] = useState<{ id: string; decision: "approved" | "rejected" }>();
-  const [rowRemark, setRowRemark] = useState("");
-
+  const [dateFrom, setDateFrom] = useState<string | null>("");
+  const [dateTo, setDateTo] = useState<string | null>("");
   const scopedDepartmentIds = new Set(userDepartments.map((department) => department.id));
   const filtered = useMemo(() => approvalEntries.filter((entry) => {
     if (!scopedDepartmentIds.has(entry.departmentId)) return false;
     if (departmentFilter !== "all" && entry.departmentId !== departmentFilter) return false;
     if (moduleFilter !== "all" && entry.moduleKey !== moduleFilter) return false;
     if (statusFilter !== "all" && entry.status !== statusFilter) return false;
-    if (!matchesEntryDateRange(entry.entryDate, dateFrom, dateTo)) return false;
+    if (dateFrom === null || dateTo === null || !matchesEntryDateRange(entry.entryDate, dateFrom, dateTo)) return false;
     return true;
   }), [approvalEntries, departmentFilter, moduleFilter, statusFilter, dateFrom, dateTo]);
 
-  const pendingSelected = filtered.filter((entry) => selectedIds.includes(entry.id) && entry.status === "submitted");
   const availableModules = [...new Set(approvalEntries
     .filter((entry) => scopedDepartmentIds.has(entry.departmentId))
     .filter((entry) => departmentFilter === "all" || entry.departmentId === departmentFilter)
     .map((entry) => entry.moduleKey))];
-
-  function toggleEntry(entryId: string) {
-    setSelectedIds((current) => current.includes(entryId) ? current.filter((id) => id !== entryId) : [...current, entryId]);
-  }
-
-  function runBulkDecision(decision: "approved" | "rejected") {
-    if (pendingSelected.length === 0) return;
-    if (decision === "rejected" && !bulkRemark.trim()) {
-      setBulkError("Manager remarks are required to reject submissions.");
-      return;
-    }
-    decide(pendingSelected.map((entry) => entry.id), decision, decision === "rejected" ? bulkRemark.trim() : undefined);
-    setSelectedIds([]);
-    setBulkRemark("");
-    setShowBulkReject(false);
-    setBulkError("");
-  }
 
   function authorName(entry: LogEntry) {
     return users.find((item) => item.id === entry.authorId)?.name ?? "Unknown";
@@ -133,76 +110,39 @@ function ApprovalsPage() {
           </select>
         </label>
         <label className="grid gap-1 text-xs font-medium text-muted-foreground">Entry date from
-          <input aria-label="Entry date from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" />
+          <DateInput aria-label="Entry date from" value={dateFrom} onValueChange={setDateFrom} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" />
         </label>
         <label className="grid gap-1 text-xs font-medium text-muted-foreground">Entry date to
-          <input aria-label="Entry date to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" />
+          <DateInput aria-label="Entry date to" value={dateTo} onValueChange={setDateTo} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground" />
         </label>
         <span className="ml-auto pb-2 text-sm text-muted-foreground">{filtered.length} submission{filtered.length === 1 ? "" : "s"}</span>
       </div>
 
-      {decisionTarget && <form className="flex flex-wrap items-end gap-2 rounded-md border p-3" onSubmit={(event) => {
-        event.preventDefault();
-        if (decisionTarget.decision === "rejected" && !rowRemark.trim()) return;
-        decide([decisionTarget.id], decisionTarget.decision, rowRemark.trim() || undefined);
-        setDecisionTarget(undefined);
-      }}>
-        <label className="grid gap-1 text-sm">Manager remarks
-          <input className="rounded border px-2 py-1" value={rowRemark} onChange={(event) => setRowRemark(event.target.value)} required={decisionTarget.decision === "rejected"} />
-        </label>
-        <Button size="sm">Confirm {decisionTarget.decision === "approved" ? "approval" : "rejection"}</Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => setDecisionTarget(undefined)}>Cancel</Button>
-      </form>}
-      {view === "list" ? <>
-        {pendingSelected.length > 0 && <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
-          <span className="mr-2 text-sm font-medium text-foreground">{pendingSelected.length} pending selected</span>
-          <Button size="sm" onClick={() => runBulkDecision("approved")}><Check /> Approve selected</Button>
-          <Button size="sm" variant="destructive" onClick={() => { setShowBulkReject(true); setBulkError(""); }}><X /> Reject selected</Button>
-          {showBulkReject && <div className="flex w-full flex-wrap items-start gap-2 pt-2">
-            <div className="min-w-64 flex-1">
-              <label htmlFor="bulk-remarks" className="mb-1 block text-xs font-medium text-foreground">Manager remarks (required)</label>
-              <textarea id="bulk-remarks" rows={2} value={bulkRemark} onChange={(event) => { setBulkRemark(event.target.value); setBulkError(""); }} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground" />
-              {bulkError && <p className="mt-1 text-xs text-destructive">{bulkError}</p>}
-            </div>
-            <Button className="mt-5" variant="destructive" onClick={() => runBulkDecision("rejected")}>Confirm rejection</Button>
-            <Button className="mt-5" variant="outline" onClick={() => { setShowBulkReject(false); setBulkError(""); }}>Cancel</Button>
-          </div>}
-        </div>}
+      {view === "list" ? (
         <div className="overflow-x-auto rounded-md border border-border bg-background">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-surface text-xs font-medium uppercase text-muted-foreground"><tr>
-              <th className="w-10 px-4 py-3"><input type="checkbox" aria-label="Select all pending submissions" checked={pendingSelected.length > 0 && pendingSelected.length === filtered.filter((entry) => entry.status === "submitted").length} onChange={(event) => setSelectedIds(event.target.checked ? [...new Set([...selectedIds, ...filtered.filter((entry) => entry.status === "submitted").map((entry) => entry.id)])] : selectedIds.filter((id) => !filtered.some((entry) => entry.id === id)))} /></th>
-              <th className="whitespace-nowrap px-4 py-3">Employee</th><th className="whitespace-nowrap px-4 py-3">Department</th><th className="whitespace-nowrap px-4 py-3">Module</th><th className="whitespace-nowrap px-4 py-3">Entry date</th><th className="whitespace-nowrap px-4 py-3">Submitted at</th><th className="whitespace-nowrap px-4 py-3">Status</th><th className="whitespace-nowrap px-4 py-3 text-right">Review / action</th>
+              <th className="whitespace-nowrap px-4 py-3">Entry ID</th><th className="whitespace-nowrap px-4 py-3">Employee</th><th className="whitespace-nowrap px-4 py-3">Department</th><th className="whitespace-nowrap px-4 py-3">Module</th><th className="whitespace-nowrap px-4 py-3">Entry date</th><th className="whitespace-nowrap px-4 py-3">Submitted at</th><th className="whitespace-nowrap px-4 py-3">Status</th><th className="whitespace-nowrap px-4 py-3 text-right">Action</th>
             </tr></thead>
             <tbody className="divide-y divide-border">
               {filtered.length ? filtered.map((entry) => <tr key={entry.id} className="hover:bg-surface/50">
-                <td className="px-4 py-3"><input type="checkbox" aria-label={`Select ${authorName(entry)} submission`} disabled={entry.status !== "submitted"} checked={selectedIds.includes(entry.id)} onChange={() => toggleEntry(entry.id)} /></td>
-                <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">{authorName(entry)}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{departmentName(entry.departmentId)}</td><td className="px-4 py-3 text-muted-foreground">{moduleName(entry.moduleKey)}</td><td className="whitespace-nowrap px-4 py-3">{formatDate(entry.entryDate)}</td>
+                <td className="whitespace-nowrap px-4 py-3">{entryDisplayId(entry)}</td><td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">{authorName(entry)}</td><td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{departmentName(entry.departmentId)}</td><td className="px-4 py-3 text-muted-foreground">{moduleName(entry.moduleKey)}</td><td className="whitespace-nowrap px-4 py-3">{formatDate(entry.entryDate)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{entry.submittedAt ? <span className="inline-flex items-center gap-1.5"><Clock className="h-3 w-3" />{formatDateTime(entry.submittedAt)}</span> : "—"}</td><td className="px-4 py-3"><StatusLabel status={entry.status as ApprovalStatus} /></td>
-                <td className="space-x-2 whitespace-nowrap px-4 py-3 text-right">{entry.status === "submitted" && <>
-                  <Button size="sm" variant="outline" onClick={() => { setRowRemark(""); setDecisionTarget({ id: entry.id, decision: "approved" }); }}>Approve</Button>
-                  <Button size="sm" variant="outline" onClick={() => { setRowRemark(""); setDecisionTarget({ id: entry.id, decision: "rejected" }); }}>Reject</Button>
-                </>}<Link to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover">{entry.status === "submitted" ? "Review" : "View"}<ArrowRight className="h-3.5 w-3.5" /></Link></td>
+                <td className="whitespace-nowrap px-4 py-3 text-right"><Link to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover">View<ArrowRight className="h-3.5 w-3.5" /></Link></td>
               </tr>) : <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">No submissions match these filters.</td></tr>}
             </tbody>
           </table>
         </div>
-      </> : <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-3">
+      ) : <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-3">
         {(["submitted", "approved", "rejected"] as const).map((status) => {
           const items = filtered.filter((entry) => entry.status === status);
-          return <section key={status} onDragOver={(event) => { if (status !== "submitted") event.preventDefault(); }} onDrop={(event) => {
-            event.preventDefault();
-            const id = event.dataTransfer.getData("text/plain");
-            if (status === "submitted" || !filtered.some((entry) => entry.id === id && entry.status === "submitted")) return;
-            setRowRemark("");
-            setDecisionTarget({ id, decision: status });
-          }} aria-label={`${statusLabels[status]} submissions`} className="min-w-0">
+          return <section key={status} aria-label={`${statusLabels[status]} submissions`} className="min-w-0">
             <div className="mb-3 flex items-center justify-between border-b border-border pb-3"><h2 className="text-sm font-semibold text-foreground">{statusLabels[status]}</h2><span className="text-xs text-muted-foreground">{items.length}</span></div>
-            <div className="space-y-3">{items.map((entry) => <Link key={entry.id} draggable={entry.status === "submitted"} onDragStart={(event) => { if (entry.status === "submitted") event.dataTransfer.setData("text/plain", entry.id); }} to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="block rounded-md border border-border bg-background p-4 transition-colors hover:bg-surface">
+            <div className="space-y-3">{items.map((entry) => <Link key={entry.id} draggable={false} to="/app/approvals/$entryId" params={{ entryId: entry.id }} className="block rounded-md border border-border bg-background p-4 transition-colors hover:bg-surface">
               <div className="mb-3 flex items-start justify-between gap-2"><span className="font-medium text-foreground">{authorName(entry)}</span><StatusLabel status={entry.status} /></div>
               <p className="text-sm text-muted-foreground">{departmentName(entry.departmentId)} · {moduleName(entry.moduleKey)}</p>
               <p className="mt-2 line-clamp-2 text-sm">{String(Object.values(entry.values)[1] ?? "")}</p>
-              <p className="mt-2 text-xs text-muted-foreground">Entry {formatDate(entry.entryDate)} · Submitted {entry.submittedAt ? formatDateTime(entry.submittedAt) : "—"}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{entryDisplayId(entry)} · {formatDate(entry.entryDate)} · Submitted {entry.submittedAt ? formatDateTime(entry.submittedAt) : "—"}</p>
             </Link>)}{items.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No submissions</p>}</div>
           </section>;
         })}

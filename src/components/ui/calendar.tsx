@@ -4,7 +4,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "lucide-react"
-import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
+import { DayButton, DayPicker, getDefaultClassNames, useDayPicker, type MonthCaptionProps } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -46,25 +46,25 @@ function Calendar({
         ),
         month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
         nav: cn(
-          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
+          "pointer-events-none absolute inset-x-0 top-0 z-10 flex h-(--cell-size) items-center justify-between",
           defaultClassNames.nav
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "h-[--cell-size] w-[--cell-size] select-none p-0 aria-disabled:opacity-50",
+          "pointer-events-auto size-(--cell-size) select-none p-0 aria-disabled:opacity-50",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "h-[--cell-size] w-[--cell-size] select-none p-0 aria-disabled:opacity-50",
+          "pointer-events-auto size-(--cell-size) select-none p-0 aria-disabled:opacity-50",
           defaultClassNames.button_next
         ),
         month_caption: cn(
-          "flex h-[--cell-size] w-full items-center justify-center px-[--cell-size]",
+          "flex h-(--cell-size) items-center justify-center px-(--cell-size)",
           defaultClassNames.month_caption
         ),
         dropdowns: cn(
-          "flex h-[--cell-size] w-full items-center justify-center gap-1.5 text-sm font-medium",
+          "flex h-(--cell-size) w-full items-center justify-center gap-1.5 text-sm font-medium",
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
@@ -82,15 +82,13 @@ function Calendar({
             : "[&>svg]:text-muted-foreground flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),
-        month_grid: cn("w-full border-collapse", defaultClassNames.month_grid),
-        weekdays: cn("flex", defaultClassNames.weekdays),
+        month_grid: cn("mt-1 table-fixed border-collapse", defaultClassNames.month_grid),
         weekday: cn(
-          "text-muted-foreground flex-1 select-none rounded-md text-[0.8rem] font-normal",
+          "h-(--cell-size) w-(--cell-size) select-none text-center text-xs font-normal text-muted-foreground",
           defaultClassNames.weekday
         ),
-        week: cn("mt-2 flex w-full", defaultClassNames.week),
         week_number_header: cn(
-          "w-[--cell-size] select-none",
+          "w-(--cell-size) select-none",
           defaultClassNames.week_number_header
         ),
         week_number: cn(
@@ -98,7 +96,7 @@ function Calendar({
           defaultClassNames.week_number
         ),
         day: cn(
-          "group/day relative aspect-square h-full w-full select-none p-0 text-center [&:first-child[data-selected=true]_button]:rounded-l-md [&:last-child[data-selected=true]_button]:rounded-r-md",
+          "group/day relative size-(--cell-size) select-none p-0 text-center [&:first-child[data-selected=true]_button]:rounded-l-md [&:last-child[data-selected=true]_button]:rounded-r-md",
           defaultClassNames.day
         ),
         range_start: cn(
@@ -123,6 +121,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        ...(captionLayout === "label" && { MonthCaption: CalendarMonthCaption }),
         Root: ({ className, rootRef, ...props }) => {
           return (
             <div
@@ -157,7 +156,7 @@ function Calendar({
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
-              <div className="flex size-[--cell-size] items-center justify-center text-center">
+              <div className="flex size-(--cell-size) items-center justify-center text-center">
                 {children}
               </div>
             </td>
@@ -167,6 +166,66 @@ function Calendar({
       }}
       {...props}
     />
+  )
+}
+
+function CalendarMonthCaption({
+  calendarMonth,
+  displayIndex: _displayIndex,
+  children: _children,
+  ...props
+}: MonthCaptionProps) {
+  const { goToMonth, dayPickerProps } = useDayPicker()
+  const { locale, startMonth, endMonth } = dayPickerProps
+  const { date } = calendarMonth
+  const displayedYear = date.getFullYear()
+  const displayedMonth = date.getTime()
+  const [yearChoice, setYearChoice] = React.useState<{ year: number; origin: number }>()
+  const pendingYear = yearChoice?.origin === displayedMonth ? yearChoice.year : undefined
+  const monthSelect = React.useRef<HTMLSelectElement>(null)
+  const year = pendingYear ?? displayedYear
+  const firstYear = startMonth?.getFullYear() ?? Math.max(1, displayedYear - 100)
+  const lastYear = endMonth?.getFullYear() ?? Math.min(9999, displayedYear + 100)
+  const monthNames = new Intl.DateTimeFormat(locale?.code, { month: "long" })
+  const firstMonth = startMonth && year === startMonth.getFullYear() ? startMonth.getMonth() : 0
+  const lastMonth = endMonth && year === endMonth.getFullYear() ? endMonth.getMonth() : 11
+
+  React.useEffect(() => {
+    if (pendingYear !== undefined) monthSelect.current?.focus()
+  }, [pendingYear])
+
+  return (
+    <div {...props}>
+      <div className="flex min-w-0 items-center gap-1 text-sm font-medium">
+          <select
+            ref={monthSelect}
+            aria-label="Select calendar month"
+            value={pendingYear === undefined ? date.getMonth() : ""}
+            className="min-w-0 cursor-pointer appearance-none rounded bg-background underline-offset-2 hover:underline"
+            onChange={(event) => {
+              const target = new Date(date)
+              target.setFullYear(year, Number(event.target.value), 1)
+              goToMonth(target)
+              setYearChoice(undefined)
+            }}
+          >
+            <option value="" disabled>Month</option>
+            {Array.from({ length: lastMonth - firstMonth + 1 }, (_, index) => {
+              const month = index + firstMonth
+              return <option key={month} value={month}>{monthNames.format(new Date(2024, month, 1))}</option>
+            })}
+          </select>
+        <select
+          aria-label="Select calendar year"
+          value={year}
+          className="cursor-pointer appearance-none rounded bg-background underline-offset-2 hover:underline"
+          onChange={(event) => setYearChoice({ year: Number(event.target.value), origin: displayedMonth })}
+        >
+          {Array.from({ length: lastYear - firstYear + 1 }, (_, index) => firstYear + index)
+            .map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
+      </div>
+    </div>
   )
 }
 
@@ -199,7 +258,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square h-auto w-full min-w-[--cell-size] flex-col gap-1 font-normal leading-none data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] [&>span]:text-xs [&>span]:opacity-70",
+        "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex size-(--cell-size) flex-col gap-1 font-normal leading-none data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}

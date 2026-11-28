@@ -1,3 +1,4 @@
+import { entryDisplayId } from "../../lib/rivet/entryId";
 import { useRivet, useCurrentUser } from "../../lib/rivet/store";
 import { moduleName } from "../../lib/rivet/demo-data";
 import { Link } from "@tanstack/react-router";
@@ -121,7 +122,7 @@ export function EmployeeDashboard() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <p className="truncate text-sm font-medium text-foreground">
-                            {moduleName(entry.moduleKey)}
+                            {entryDisplayId(entry)} · {moduleName(entry.moduleKey)}
                           </p>
                           <StatusBadge status={entry.status} />
                         </div>
@@ -172,7 +173,7 @@ export function EmployeeDashboard() {
                     {recentWork.map((entry) => (
                       <tr key={entry.id} className="hover:bg-surface/50 transition-colors">
                         <td className="px-4 py-3 font-medium text-foreground">
-                          {moduleName(entry.moduleKey)}
+                          {entryDisplayId(entry)} · {moduleName(entry.moduleKey)}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(entry.entryDate)}</td>
                         <td className="px-4 py-3 whitespace-nowrap">

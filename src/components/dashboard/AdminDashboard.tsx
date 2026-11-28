@@ -1,3 +1,4 @@
+import { entryDisplayId } from "../../lib/rivet/entryId";
 import { useState } from "react";
 import { useRivet } from "../../lib/rivet/store";
 import { userName, departmentName } from "../../lib/rivet/demo-data";
@@ -139,7 +140,7 @@ export function AdminDashboard() {
                     <td className="px-4 py-3 whitespace-nowrap">{actionBadge(record.action)}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {record.entity}{" "}
-                      <span className="text-xs opacity-60 whitespace-nowrap">({record.entityId})</span>
+                      <span className="text-xs opacity-60 whitespace-nowrap">({entryDisplayId(visibleEntries.find((entry) => entry.id === record.entityId) ?? { id: record.entityId })})</span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       {record.departmentId ? departmentName(record.departmentId) : "-"}
